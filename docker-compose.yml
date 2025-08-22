@@ -1,0 +1,36 @@
+version: '3.8'
+
+services:
+  movicloud-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "15078:15078"
+    environment:
+      - NODE_ENV=production
+      - PORT=15078
+      - HOSTNAME=0.0.0.0
+    volumes:
+      - ./data:/movicloud-app/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:15078/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # 如果需要数据库服务，可以取消注释下面的部分
+  # db:
+  #   image: postgres:15-alpine
+  #   environment:
+  #     POSTGRES_DB: movicloud
+  #     POSTGRES_USER: movicloud
+  #     POSTGRES_PASSWORD: movicloud
+  #   volumes:
+  #     - postgres_data:/var/lib/postgresql/data
+  #   restart: unless-stopped
+
+# volumes:
+#   postgres_data: 

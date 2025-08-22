@@ -1,0 +1,71 @@
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Documentation
+docs/
+README.md
+
+# Development files
+.env
+.env.*
+!.env.example
+
+# Node modules (will be installed in container)
+node_modules/
+
+# Build outputs
+.nuxt/
+dist/
+.cache/
+
+# Logs
+logs/
+*.log
+
+# OS generated files
+.DS_Store
+Thumbs.db
+ehthumbs.db
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Test files
+coverage/
+*.test.js
+*.spec.js
+test/
+tests/
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Scripts (保留，Docker构建需要)
+# scripts/
+
+# Package manager files
+yarn.lock
+pnpm-lock.yaml
+
+# CI/CD
+.github/
+.gitlab-ci.yml
+.travis.yml
+.circleci/
+
+# Docker
+Dockerfile*
+.dockerignore
+docker-compose*.yml 

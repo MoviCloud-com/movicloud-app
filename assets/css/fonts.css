@@ -1,0 +1,136 @@
+@font-face {
+	font-family: 'AlimamaDaoLiTi';
+	src: url('../fonts/AlimamaDaoLiTi/AlimamaDaoLiTi.woff2') format('woff2'),
+	     url('../fonts/AlimamaDaoLiTi/AlimamaDaoLiTi.woff') format('woff'),
+	     url('../fonts/AlimamaDaoLiTi/AlimamaDaoLiTi.ttf') format('truetype');
+	font-weight: 400;
+	font-style: normal;
+	font-display: swap;
+}
+
+@font-face {
+	font-family: 'DingTalk-JinBuTi';
+	src: url('../fonts/DingTalk-JinBuTi/DingTalk-JinBuTi.woff2') format('woff2'),
+	     url('../fonts/DingTalk-JinBuTi/DingTalk-JinBuTi.woff') format('woff'),
+	     url('../fonts/DingTalk-JinBuTi/DingTalk-JinBuTi.ttf') format('truetype');
+	font-weight: 400;
+	font-style: normal;
+	font-display: swap;
+}
+
+@font-face {
+	font-family: 'Yozai-Regular';
+	src: url('../fonts/Yozai-Regular/Yozai-Regular.ttf') format('truetype');
+	font-weight: 400;
+	font-style: normal;
+	font-display: swap;
+}
+
+@font-face {
+	font-family: 'Nabla-Regular';
+	src: url('../fonts/Nabla-Regular/Nabla-Regular.woff2') format('woff2'),
+	     url('../fonts/Nabla-Regular/Nabla-Regular.woff') format('woff'),
+	     url('../fonts/Nabla-Regular/Nabla-Regular.ttf') format('truetype');
+	font-weight: 400;
+	font-style: normal;
+	font-display: swap;
+}
+
+@font-face {
+	font-family: 'AlimamaShuHeiTi-Bold';
+	src: url('../fonts/AlimamaShuHeiTi-Bold/AlimamaShuHeiTi-Bold.woff2') format('woff2'),
+	     url('../fonts/AlimamaShuHeiTi-Bold/AlimamaShuHeiTi-Bold.woff') format('woff'),
+	     url('../fonts/AlimamaShuHeiTi-Bold/AlimamaShuHeiTi-Bold.ttf') format('truetype'),
+	     url('../fonts/AlimamaShuHeiTi-Bold/AlimamaShuHeiTi-Bold.otf') format('opentype');
+	font-weight: 700;
+	font-style: normal;
+	font-display: swap;
+}
+
+@font-face {
+	font-family: 'AlimamaDongFangDaKai-Regular';
+	src: url('../fonts/AlimamaDongFangDaKai-Regular/AlimamaDongFangDaKai-Regular.woff2') format('woff2'),
+	     url('../fonts/AlimamaDongFangDaKai-Regular/AlimamaDongFangDaKai-Regular.woff') format('woff'),
+	     url('../fonts/AlimamaDongFangDaKai-Regular/AlimamaDongFangDaKai-Regular.ttf') format('truetype'),
+	     url('../fonts/AlimamaDongFangDaKai-Regular/AlimamaDongFangDaKai-Regular.otf') format('opentype');
+	font-weight: 400;
+	font-style: normal;
+	font-display: swap;
+}
+
+@font-face {
+	font-family: 'AlimamaAgileVF-Thin';
+	src: url('../fonts/AlimamaAgileVF-Thin/AlimamaAgileVF-Thin.woff2') format('woff2'),
+	     url('../fonts/AlimamaAgileVF-Thin/AlimamaAgileVF-Thin.woff') format('woff'),
+	     url('../fonts/AlimamaAgileVF-Thin/AlimamaAgileVF-Thin.ttf') format('truetype');
+	font-weight: 100;
+	font-style: normal;
+	font-display: swap;
+}
+
+@font-face {
+	font-family: 'AlimamaFangYuanTiVF-Thin';
+	src: url('../fonts/AlimamaFangYuanTiVF-Thin/AlimamaFangYuanTiVF-Thin.woff2') format('woff2'),
+	     url('../fonts/AlimamaFangYuanTiVF-Thin/AlimamaFangYuanTiVF-Thin.woff') format('woff'),
+	     url('../fonts/AlimamaFangYuanTiVF-Thin/AlimamaFangYuanTiVF-Thin.ttf') format('truetype');
+	font-weight: 100;
+	font-style: normal;
+	font-display: swap;
+}
+
+@font-face {
+	font-family: 'TsangerYuYangT';
+	src: url('../fonts/TsangerYuYangT/TsangerYuYangT_W05_W05.ttf') format('truetype');
+	font-weight: 500;
+	font-style: normal;
+	font-display: swap;
+}
+
+@font-face {
+	font-family: 'SmileySans-Oblique';
+	src: url('../fonts/SmileySans-Oblique/SmileySans-Oblique.woff2') format('woff2'),
+	     url('../fonts/SmileySans-Oblique/SmileySans-Oblique.woff') format('woff'),
+	     url('../fonts/SmileySans-Oblique/SmileySans-Oblique.ttf') format('truetype'),
+	     url('../fonts/SmileySans-Oblique/SmileySans-Oblique.otf') format('opentype');
+	font-weight: 400;
+	font-style: oblique;
+	font-display: swap;
+}
+
+@font-face {
+	font-family: 'Alibaba-PuHuiTi';
+	src: url('../fonts/Alibaba-PuHuiTi/Alibaba_PuHuiTi_2.0_55_Regular_55_Regular.ttf') format('truetype');
+	font-weight: 400;
+	font-style: normal;
+	font-display: swap;
+}
+
+@font-face {
+	font-family: 'Source Han Sans SC';
+	src: url('../fonts/Source-Han-Sans-SC/Source_Han_Sans_SC_Regular.otf') format('opentype');
+	font-weight: 400;
+	font-style: normal;
+	font-display: swap;
+}
+
+@font-face {
+	font-family: 'Source Han Serif SC Light';
+	src: url('../fonts/Source-Han-Serif-SC-Light-Light/Source-Han-Serif-SC-Light-Light.otf') format('opentype');
+	font-weight: 300;
+	font-style: normal;
+	font-display: swap;
+}
+
+:root {
+	--app-body-font: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, 'PingFang SC', 'Noto Sans CJK SC', 'Microsoft YaHei', sans-serif;
+	--app-heading-font: var(--app-body-font);
+}
+
+body {
+	font-family: var(--app-body-font) !important;
+}
+
+h1, h2, h3, h4, h5, h6, .heading-font {
+	font-family: var(--app-heading-font) !important;
+	font-weight: 400 !important;
+} 

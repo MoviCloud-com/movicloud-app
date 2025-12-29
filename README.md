@@ -16,9 +16,11 @@ MoviCloud is a Nuxt 3-based media hub that aggregates TMDB data for movies and T
 
 ## 1. Quick Start
 
-### Option A: FeiNiuOS App Store (Recommended for FeiNiuOS users)
+### Option A: FNNAS App Store (Recommended for FNNAS users)
 
-If you're using FeiNiuOS, you can download the pre-configured installation package from our [GitHub Releases](https://github.com/MoviCloud-com/movicloud-app/releases) page. The package is specifically adapted for FeiNiuOS App Store installation.
+![FNNAS](screenshots/fnnas.png)
+
+If you're using FNNAS, you can download the pre-configured installation package from our [GitHub Releases](https://github.com/MoviCloud-com/movicloud-app/releases) page. The package is specifically adapted for FNNAS App Store installation.
 
 ### Option B: Docker Installation
 

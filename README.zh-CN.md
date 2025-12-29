@@ -18,6 +18,8 @@ MoviCloud 是一款基于 Nuxt 3 的影视聚合与浏览应用，集成 TMDB �
 
 ### 方式 A：飞牛OS 商店安装（推荐飞牛OS用户使用）
 
+![飞牛OS](screenshots/fnnas.png)
+
 如果您使用的是飞牛OS系统，可以前往 [GitHub Releases](https://github.com/MoviCloud-com/movicloud-app/releases) 页面下载适配飞牛商店的安装包。
 
 ### 方式 B：Docker 安装

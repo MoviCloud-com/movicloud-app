@@ -14,14 +14,20 @@ MoviCloud is a Nuxt 3-based media hub that aggregates TMDB data for movies and T
 
 ---
 
-## 1. Quick Start (Docker)
+## 1. Quick Start
 
-### 1) Pull the image
+### Option A: FeiNiuOS App Store (Recommended for FeiNiuOS users)
+
+If you're using FeiNiuOS, you can download the pre-configured installation package from our [GitHub Releases](https://github.com/MoviCloud-com/movicloud-app/releases) page. The package is specifically adapted for FeiNiuOS App Store installation.
+
+### Option B: Docker Installation
+
+#### 1) Pull the image
 ```bash
 docker pull movicloud/movicloud-app:latest
 ```
 
-### 2) Run (simple)
+#### 2) Run (simple)
 ```bash
 docker run -d \
   --name movicloud \
@@ -34,7 +40,7 @@ docker run -d \
 - The first visit will redirect to the installation wizard (`/install`)
 - Data (DB, uploads) are persisted at `/movicloud-app/data`
 
-### 3) Recommended: Docker Compose
+#### 3) Recommended: Docker Compose
 ```yaml
 services:
   movicloud:
@@ -169,7 +175,29 @@ server {
 
 ---
 
-## 7. Screenshots
+## 7. Development Roadmap
+
+The following features are planned for future releases:
+
+### Cloud Drive Integration
+- **Cloud Drive SDK Integration**: Integrate cloud drive SDKs to enable users to add cloud drive accounts. For security, all account information and authorization credentials will be stored locally and never uploaded to the cloud.
+- **Direct File Transfer**: Share files directly to users' cloud drives for convenient access.
+- **Resource Submission Enhancement**: When users submit media resources, a popup will allow them to select files from their bound cloud drive accounts, automatically generating share links.
+
+### Cloud Drive Activities
+- **VIP Activation Campaigns**: Gradually launch free cloud drive VIP activation and renewal campaigns.
+- **Storage Expansion Campaigns**: Gradually launch free cloud drive storage expansion campaigns.
+
+### Social & Community Features
+- **Movie Reviews**: Add movie review functionality, allowing users to share their thoughts and ratings.
+- **Social Feed & Chat**: Add social feed or chat room functionality for user interaction and communication.
+
+### AI Features
+- **AI Search**: Add AI-powered search functionality. Users will need to provide their own large language model API keys to use this feature.
+
+---
+
+## 8. Screenshots
 
 - Installation Welcome:
 

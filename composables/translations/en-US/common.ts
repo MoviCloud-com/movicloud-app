@@ -402,6 +402,5 @@ export const common = {
   'created_at': 'Created At',
   'no_applications': 'You have not submitted any applications',
   'apply_now': 'Apply Now',
-  'active': 'Active',
-  'back': 'Back'
+  'active': 'Active'
 } 

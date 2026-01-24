@@ -407,6 +407,5 @@ export const common = {
   'created_at': '申請時間',
   'no_applications': '您還沒有提交過申請',
   'apply_now': '立即申請',
-  'active': '活躍',
-  'back': '返回'
+  'active': '活躍'
 } 

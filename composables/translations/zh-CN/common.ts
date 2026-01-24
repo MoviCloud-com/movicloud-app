@@ -391,6 +391,5 @@ export const common = {
   'created_at': '申请时间',
   'no_applications': '您还没有提交过申请',
   'apply_now': '立即申请',
-  'active': '活跃',
-  'back': '返回'
+  'active': '活跃'
 } 

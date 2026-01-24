@@ -44,13 +44,7 @@
           </button>
 
           <!-- 通知按钮 -->
-          <button
-            class="p-2 text-white hover:text-white transition-colors relative mix-blend-difference"
-            :title="t('notifications')"
-          >
-            <i class="pi pi-bell text-lg"></i>
-            <span class="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-          </button>
+          <NotificationBell />
 
           <!-- 用户信息 -->
           <div class="flex items-center space-x-3 user-menu">
@@ -93,6 +87,14 @@
                     </button>
                     
                     <button
+                      @click="goToMyApplications"
+                      class="flex items-center gap-3 px-3 py-2 text-left text-surface-700 dark:text-surface-300 hover:bg-surface-100 dark:hover:bg-surface-700 rounded-lg transition-colors cursor-pointer"
+                    >
+                      <i class="pi pi-file text-lg"></i>
+                      <span>{{ t('my_applications') }}</span>
+                    </button>
+                    
+                    <button
                       @click="goToSettings"
                       class="flex items-center gap-3 px-3 py-2 text-left text-surface-700 dark:text-surface-300 hover:bg-surface-100 dark:hover:bg-surface-700 rounded-lg transition-colors cursor-pointer"
                     >
@@ -123,6 +125,7 @@ import { useAuth, type User } from '../composables/useAuth'
 import { useLayout } from '../composables/use-layout'
 import { t } from '../composables/useI18n'
 import { useUserEvents } from '../composables/useUserEvents'
+import NotificationBell from './NotificationBell.vue'
 
 // Props
 interface Props {
@@ -210,6 +213,11 @@ const handleAvatarError = (event: Event) => {
 const goToProfile = () => {
   showUserMenu.value = false
   navigateTo('/profile')
+}
+
+const goToMyApplications = () => {
+  showUserMenu.value = false
+  navigateTo('/my-applications')
 }
 
 const goToSettings = () => {

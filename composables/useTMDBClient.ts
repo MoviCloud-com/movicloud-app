@@ -46,7 +46,7 @@ export const useTMDBClient = () => {
 	// 通用TMDB请求函数（带去重 + 结果缓存）
 	const makeTMDBRequest = async (endpoint: string, params: Record<string, any> = {}) => {
 		const config = await getTMDBConfig()
-		const { apiKey, apiBaseUrl, proxyEnabled } = config
+		const { apiKey, apiBaseUrl } = config
 		
 		if (!apiKey) {
 			throw new Error('TMDB API密钥未配置')
@@ -66,8 +66,7 @@ export const useTMDBClient = () => {
 		})
 
 		const directUrl = `${apiBaseUrl}/3${endpoint}?${queryParams.toString()}`
-		const backendKey = `backend:${endpoint}:${JSON.stringify(params)}`
-		const requestKey = proxyEnabled ? backendKey : `direct:${directUrl}`
+		const requestKey = `direct:${directUrl}`
 
 		// 命中结果缓存
 		const cached = responseCache.get(requestKey)
@@ -81,18 +80,9 @@ export const useTMDBClient = () => {
 
 		const exec = (async () => {
 			try {
-				if (proxyEnabled) {
-					const response = await $fetch<{ success: boolean; data: any }>('/api/tmdb', {
-						query: { action: endpoint.replace('/', '-').replace(/^\//, ''), ...params }
-					})
-					if (!response.success) throw new Error('TMDB请求失败')
-					responseCache.set(requestKey, { ts: Date.now(), data: response.data })
-					return response.data
-				} else {
-					const data = await $fetch(directUrl)
-					responseCache.set(requestKey, { ts: Date.now(), data })
-					return data
-				}
+				const data = await $fetch(directUrl)
+				responseCache.set(requestKey, { ts: Date.now(), data })
+				return data
 			} finally {
 				inFlightRequests.delete(requestKey)
 			}

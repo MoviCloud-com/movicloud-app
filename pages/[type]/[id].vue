@@ -953,20 +953,8 @@ watch(() => mediaImages.value, () => {
     <div v-else-if="mediaDetails" class="min-h-screen">
       <!-- 背景图片 -->
       <div class="relative h-[500px] 2xl:h-[700px]">
-        <!-- 头图 -->
-        <img 
-          v-if="backdropUrl"
-          :src="backdropUrl" 
-          :alt="title"
-          class="w-full h-full object-cover"
-        />
-        
-        <!-- 无头图时的占位 -->
-        <div 
-          v-else
-          class="w-full h-full bg-gradient-to-br from-gray-300 to-gray-400 dark:from-gray-700 dark:to-gray-800"
-        ></div>
-        
+        <img class="w-full h-full object-cover mask-b-from-20% mask-b-to-80%" :src="backdropUrl" />
+
         <div class="absolute inset-0 bg-gradient-to-b from-transparent via-surface-50/50 to-surface-50 dark:via-surface-950/50 dark:to-surface-950"></div>
         
         <!-- 主要内容 -->
@@ -974,7 +962,7 @@ watch(() => mediaImages.value, () => {
           <div class="mx-auto">
             <!-- 标题和基本信息 -->
             <div class="mb-6">
-              <h1 class="text-5xl 2xl:text-7xl font-bold text-gray-900 dark:text-white mb-4">{{ title }}</h1>
+              <h1 class="text-5xl 2xl:text-7xl font-bold text-gray-900 dark:text-white mb-4 text-shadow-lg/50 text-shadow-gray-600  dark:text-shadow-lg/50 dark:text-shadow-gray-300">{{ title }}</h1>
               
               <!-- 基本信息行 -->
               <div class="flex items-center gap-4 text-gray-900/90 dark:text-white/90 text-sm mb-4">

@@ -27,7 +27,6 @@ const tabs = computed(() => {
   return [
     { id: 'theme', name: t('theme_settings'), icon: 'pi pi-palette' },
     { id: 'tmdb', name: 'TMDB API', icon: 'pi pi-database' },
-    { id: 'proxy', name: t('proxy_settings'), icon: 'pi pi-globe' },
     { id: 'language', name: t('language_settings'), icon: 'pi pi-globe' },
     { id: 'system', name: t('system_settings'), icon: 'pi pi-cog' }
   ]
@@ -58,32 +57,12 @@ const fontOptions = computed(() => {
   ]
 })
 
-// 代理启用选项 - 使用computed属性以支持多语言
-const proxyOptions = computed(() => {
-  // 确保t函数可用
-  if (typeof t !== 'function') return []
-  
-  return [
-    { label: t('enabled'), value: true },
-    { label: t('disabled'), value: false }
-  ]
-});
-
 // 主题模式的计算属性
 const themeModeValue = computed({
   get: () => themeMode.value,
   set: (value: ThemeMode) => {
     log('Setting theme mode to:', value)
     setThemeMode(value)
-  }
-})
-
-// 代理启用的计算属性
-const proxyEnabledValue = computed({
-  get: () => settings.value.proxyEnabled,
-  set: (value: boolean) => {
-    log('Setting proxy enabled to:', value)
-    settings.value.proxyEnabled = value
   }
 })
 
@@ -106,6 +85,7 @@ const settings = ref({
   tmdbApiKey: '',
   tmdbApiBaseUrl: 'https://api.tmdb.org',
   tmdbImageBaseUrl: 'https://image.tmdb.org',
+  // 代理相关字段保留但不在UI与接口中使用
   proxyEnabled: false,
   httpProxy: 'http://127.0.0.1:7890',
   httpsProxy: 'http://127.0.0.1:7890',
@@ -122,9 +102,8 @@ const resetLoading = ref(false)
 const loadSettings = async () => {
   try {
     loading.value = true
-    const [tmdbResponse, proxyResponse, languageResponse] = await Promise.all([
+    const [tmdbResponse, languageResponse] = await Promise.all([
       $fetch<{ success: boolean; data?: any }>('/api/settings/tmdb'),
-      $fetch<{ success: boolean; data?: any }>('/api/settings/proxy'),
       $fetch<{ success: boolean; data?: any }>('/api/settings/language')
     ])
     
@@ -132,13 +111,6 @@ const loadSettings = async () => {
       settings.value.tmdbApiKey = tmdbResponse.data.apiKey || ''
       settings.value.tmdbApiBaseUrl = tmdbResponse.data.apiBaseUrl || 'https://api.tmdb.org'
       settings.value.tmdbImageBaseUrl = tmdbResponse.data.imageBaseUrl || 'https://image.tmdb.org'
-    }
-    
-    if (proxyResponse.success && proxyResponse.data) {
-      settings.value.proxyEnabled = proxyResponse.data.proxyEnabled || false
-      settings.value.httpProxy = proxyResponse.data.httpProxy || 'http://127.0.0.1:7890'
-      settings.value.httpsProxy = proxyResponse.data.httpsProxy || 'http://127.0.0.1:7890'
-      settings.value.allProxy = proxyResponse.data.allProxy || 'socks5://127.0.0.1:7890'
     }
     
     if (languageResponse.success && languageResponse.data) {
@@ -181,43 +153,6 @@ const saveTMDBSettings = async () => {
       severity: 'error',
       summary: t('error'),
       detail: t('save_tmdb_failed'),
-      life: 3000
-    })
-  } finally {
-    saving.value = false
-  }
-}
-
-// 保存代理设置
-const saveProxySettings = async () => {
-  try {
-    saving.value = true
-    
-    await $fetch('/api/settings/proxy', {
-      method: 'POST',
-      body: {
-        proxyEnabled: settings.value.proxyEnabled,
-        httpProxy: settings.value.httpProxy,
-        httpsProxy: settings.value.httpsProxy,
-        allProxy: settings.value.allProxy
-      }
-    })
-    
-    // 清除设置缓存，确保下次获取最新设置
-    clearSettingsCache()
-    
-    toast.add({
-      severity: 'success',
-      summary: t('success'),
-      detail: t('save_proxy_success'),
-      life: 3000
-    })
-  } catch (error) {
-    devError('保存代理设置失败:', error)
-    toast.add({
-      severity: 'error',
-      summary: t('error'),
-      detail: t('save_proxy_failed'),
       life: 3000
     })
   } finally {
@@ -290,34 +225,6 @@ const testTMDB = async () => {
     }
   } catch (error) {
     devError('测试TMDB API失败:', error)
-    testResult.value = {
-      success: false,
-      message: t('installation_network_failed')
-    }
-  }
-}
-
-// 测试代理
-const testProxy = async () => {
-  try {
-    testResult.value = null
-    
-    const response = await $fetch<{success: boolean, message: string}>('/api/settings/test-proxy', {
-      method: 'POST',
-      body: {
-        proxyEnabled: settings.value.proxyEnabled,
-        httpProxy: settings.value.httpProxy,
-        httpsProxy: settings.value.httpsProxy,
-        allProxy: settings.value.allProxy
-      }
-    })
-    
-    testResult.value = {
-      success: response.success,
-      message: t(response.message)
-    }
-  } catch (error) {
-    devError('测试代理失败:', error)
     testResult.value = {
       success: false,
       message: t('installation_network_failed')
@@ -675,94 +582,6 @@ useHead({
               >
                 <i v-if="saving" class="pi pi-spin pi-spinner mr-2"></i>
                 {{ saving ? t('saving') : t('save_settings') }}
-              </button>
-            </div>
-            
-            <!-- 测试结果 -->
-            <div v-if="testResult" class="p-4 rounded-lg" :class="testResult.success ? 'bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400' : 'bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-400'">
-              <div class="flex items-center">
-                <i :class="testResult.success ? 'pi pi-check-circle' : 'pi pi-exclamation-triangle'" class="mr-2"></i>
-                <span>{{ testResult.message }}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-        
-        <!-- 代理设置选项卡 -->
-        <div v-if="activeTab === 'proxy'" class="bg-surface-200  dark:bg-surface-800 rounded-lg shadow-sm p-6">
-          <h3 class="text-xl font-semibold text-surface-900 dark:text-surface-0 mb-6">{{ t('proxy_settings') }}</h3>
-          
-          <div class="space-y-6">
-            <div>
-              <label class="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-2">
-                {{ t('proxy_enabled') }}
-              </label>
-              <SelectButton
-                v-model="proxyEnabledValue"
-                :options="proxyOptions"
-                optionLabel="label"
-                optionValue="value"
-                :multiple="false"
-                :allowEmpty="false"
-                @change="(event: any) => { log('Proxy enabled changed:', event.value); }"
-                class="w-full max-w-md"
-              />
-            </div>
-            
-            <div v-if="settings.proxyEnabled" class="space-y-6">
-              <div>
-                <label class="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-2">
-                  {{ t('http_proxy') }}
-                </label>
-                <InputText
-                  v-model="settings.httpProxy"
-                  type="text"
-                  :placeholder="t('http_proxy_placeholder')"
-                  class="w-full"
-                />
-              </div>
-              
-              <div>
-                <label class="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-2">
-                  {{ t('https_proxy') }}
-                </label>
-                <InputText
-                  v-model="settings.httpsProxy"
-                  type="text"
-                  :placeholder="t('https_proxy_placeholder')"
-                  class="w-full"
-                />
-              </div>
-              
-              <div>
-                <label class="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-2">
-                  {{ t('socks5_proxy') }}
-                </label>
-                <InputText
-                  v-model="settings.allProxy"
-                  type="text"
-                  :placeholder="t('socks5_proxy_placeholder')"
-                  class="w-full"
-                />
-              </div>
-            </div>
-            
-            <div class="flex gap-3">
-              <button
-                @click="saveProxySettings"
-                :disabled="saving"
-                class="px-6 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-              >
-                <i v-if="saving" class="pi pi-spin pi-spinner mr-2"></i>
-                {{ saving ? t('saving') : t('save') }}
-              </button>
-              
-              <button
-                @click="testProxy"
-                :disabled="!settings.proxyEnabled"
-                class="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-              >
-                {{ t('test_proxy') }}
               </button>
             </div>
             

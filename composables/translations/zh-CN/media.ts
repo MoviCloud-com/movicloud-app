@@ -187,13 +187,13 @@ export const media = {
   'resource_link': '资源链接',
   
   // 资源类型
-  'bluray_original': '蓝光原盘',
+  'bluray_original': '蓝光原盘（BLURAY）',
   'bluray_original_desc': '蓝光原盘，最高画质，文件较大',
-  'lossless_remux': '无损封装',
+  'lossless_remux': '无损封装（REMUX）',
   'lossless_remux_desc': '无损封装，接近原盘画质，体积适中',
-  'high_quality_encode': '高质量压制',
+  'high_quality_encode': '高质量压制（ENCODE）',
   'high_quality_encode_desc': '高质量压制，平衡画质和体积',
-  'web_version': '网络版本',
+  'web_version': '网络版本（WEB-DL）',
   'web_version_desc': '网络版本，适合在线观看，体积较小',
   
   // 网盘名称

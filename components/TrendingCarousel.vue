@@ -47,7 +47,7 @@
         
         <!-- 内容区域 -->
         <div class="absolute left-0 bottom-0 p-8 max-w-4xl z-20 pointer-events-none">
-          <h2 class="text-5xl 2xl:text-7xl font-bold text-surface-900 dark:text-surface-0 mb-4 drop-shadow-lg whitespace-nowrap overflow-hidden text-ellipsis">
+          <h2 class="text-5xl 2xl:text-7xl font-bold text-surface-900 dark:text-surface-0 mb-4 drop-shadow-lg whitespace-nowrap overflow-hidden text-ellipsis text-shadow-lg/50 text-shadow-gray-600 dark:text-shadow-lg/50 dark:text-shadow-gray-300">
             {{ getTitle(currentItem) }}
           </h2>
           <p class="text-surface-700 dark:text-surface-300 text-base md:text-lg mb-6 desc-3lines line-clamp-3 drop-shadow max-w-3xl">

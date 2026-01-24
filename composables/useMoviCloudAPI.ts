@@ -187,6 +187,172 @@ const healthCheck = async (): Promise<{
   return await request('/')
 }
 
+// 通知相关类型
+export interface Notification {
+  id: string
+  type: string
+  title: string
+  content: string
+  data?: Record<string, any>
+  is_read: boolean
+  read_at: string | null
+  created_at: string
+}
+
+export interface NotificationListResponse {
+  notifications: Notification[]
+  pagination: {
+    page: number
+    limit: number
+    total: number
+    pages: number
+  }
+}
+
+export interface UnreadCountResponse {
+  unread_count: number
+}
+
+// 获取通知列表
+const getNotifications = async (params?: {
+  page?: number
+  limit?: number
+  type?: string
+  is_read?: boolean
+}): Promise<NotificationListResponse> => {
+  const queryParams = new URLSearchParams()
+  if (params?.page) queryParams.append('page', params.page.toString())
+  if (params?.limit) queryParams.append('limit', params.limit.toString())
+  if (params?.type) queryParams.append('type', params.type)
+  if (params?.is_read !== undefined) queryParams.append('is_read', params.is_read.toString())
+  
+  const url = `/api/notifications${queryParams.toString() ? `?${queryParams.toString()}` : ''}`
+  return await request(url)
+}
+
+// 获取未读通知数量
+const getUnreadNotificationCount = async (): Promise<UnreadCountResponse> => {
+  return await request('/api/notifications/unread-count')
+}
+
+// 标记通知为已读
+const markNotificationAsRead = async (notificationId: string): Promise<void> => {
+  await request(`/api/notifications/${notificationId}/read`, {
+    method: 'POST'
+  })
+}
+
+// 标记所有通知为已读
+const markAllNotificationsAsRead = async (): Promise<void> => {
+  await request('/api/notifications/read-all', {
+    method: 'POST'
+  })
+}
+
+// 网盘申请相关类型
+export interface ClaimStep {
+  title: string
+  content: string
+  image: string | null
+}
+
+export interface TableColumn {
+  key: string
+  label: string
+}
+
+export interface TableRow {
+  [key: string]: string
+}
+
+export interface MemberBenefits {
+  columns: TableColumn[]
+  rows: TableRow[]
+}
+
+export interface CapacityBenefits {
+  columns: TableColumn[]
+  rows: TableRow[]
+}
+
+export interface TaskValidity {
+  columns: TableColumn[]
+  rows: TableRow[]
+}
+
+export interface NetdiskProject {
+  id: number
+  icon: string
+  name: string
+  theme_color: string
+  claim_instructions: string
+  claim_steps: ClaimStep[]
+  member_benefits: MemberBenefits
+  capacity_benefits: CapacityBenefits
+  task_validity: TaskValidity
+  notes: string[]
+  is_active: boolean
+  sort_order: number
+}
+
+export interface ApplicationField {
+  field_key: string
+  field_label: string
+  field_type: 'text' | 'textarea' | 'select' | 'file'
+  is_required: boolean
+  placeholder?: string
+  field_options?: string[]
+}
+
+export interface ProjectDetails {
+  id: number
+  name: string
+  application_fields: ApplicationField[]
+}
+
+export interface MemberApplication {
+  id: number
+  project: {
+    id: number
+    name: string
+    icon: string
+  }
+  status: 'pending' | 'approved' | 'rejected'
+  application_materials: Record<string, any>
+  reject_reason: string | null
+  reviewer: string | null
+  reviewed_at: string | null
+  created_at: string
+}
+
+export interface SubmitMemberApplicationRequest {
+  project_id: number
+  application_materials: Record<string, any>
+}
+
+// 获取可申请项目列表
+const getNetdiskProjects = async (): Promise<NetdiskProject[]> => {
+  return await request('/api/netdisk-applications/projects')
+}
+
+// 获取项目详情
+const getNetdiskProjectDetails = async (projectId: number): Promise<ProjectDetails> => {
+  return await request(`/api/netdisk-applications/projects/${projectId}`)
+}
+
+// 提交会员申请
+const submitMemberApplication = async (data: SubmitMemberApplicationRequest): Promise<MemberApplication> => {
+  return await request('/api/netdisk-applications/member', {
+    method: 'POST',
+    body: JSON.stringify(data)
+  })
+}
+
+// 查看我的申请
+const getMyApplications = async (): Promise<MemberApplication[]> => {
+  return await request('/api/netdisk-applications/member/my')
+}
+
 // API响应类型
 interface APIResponse<T = any> {
   success: boolean
@@ -264,6 +430,18 @@ export const useMoviCloudAPI = () => {
     rateResource,
     reportResource,
     healthCheck,
+    
+    // 通知API函数
+    getNotifications,
+    getUnreadNotificationCount,
+    markNotificationAsRead,
+    markAllNotificationsAsRead,
+    
+    // 网盘申请API函数
+    getNetdiskProjects,
+    getNetdiskProjectDetails,
+    submitMemberApplication,
+    getMyApplications,
     
     // 工具函数
     getSystemIdFromDatabase

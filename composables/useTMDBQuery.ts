@@ -12,13 +12,7 @@ const getTMDBConfig = async (): Promise<TMDBConfig> => {
   const response = await $fetch<{ success: boolean; data: any }>('/api/settings/tmdb')
   if (!response.success) throw new Error('获取TMDB配置失败')
   
-  const proxyResponse = await $fetch<{ success: boolean; data: any }>('/api/settings/proxy')
-  if (!proxyResponse.success) throw new Error('获取代理配置失败')
-  
-  return {
-    ...response.data,
-    proxyEnabled: proxyResponse.data.proxyEnabled
-  }
+  return response.data
 }
 
 // 通用TMDB请求函数
@@ -29,111 +23,101 @@ const makeTMDBRequest = async (action: string, params: Record<string, any> = {})
     throw new Error('TMDB API密钥未配置')
   }
 
-  // 未开启代理时，尽量直接访问 TMDB，减少一跳
-  if (!config.proxyEnabled) {
-    const mapActionToEndpoint = (): { path: string; query?: Record<string, any> } | null => {
-      const id = params.id
-      const page = params.page
-      const query = params.query
-      switch (action) {
-        case 'popular-movies':
-          return { path: '/movie/popular', query: { page } }
-        case 'top-rated-movies':
-          return { path: '/movie/top_rated', query: { page } }
-        case 'popular-tv':
-          return { path: '/tv/popular', query: { page } }
-        case 'top-rated-tv':
-          return { path: '/tv/top_rated', query: { page } }
-        case 'trending':
-          return { path: '/trending/all/day' }
-        case 'movie-details':
-          if (!id) return null
-          return { path: `/movie/${id}`, query: { append_to_response: 'credits,videos,images,similar,recommendations' } }
-        case 'tv-details':
-          if (!id) return null
-          return { path: `/tv/${id}`, query: { append_to_response: 'credits,videos,images,similar,recommendations' } }
-        case 'movie-images':
-          if (!id) return null
-          return { path: `/movie/${id}/images`, query: { include_image_language: 'zh,en,null' } }
-        case 'tv-images':
-          if (!id) return null
-          return { path: `/tv/${id}/images`, query: { include_image_language: 'zh,en,null' } }
-        case 'search':
-          if (!query) return null
-          return { path: '/search/multi', query: { query } }
-        case 'person-details':
-          if (!id) return null
-          return { path: `/person/${id}`, query: { append_to_response: 'combined_credits' } }
-        case 'person-movie-credits':
-          if (!id) return null
-          return { path: `/person/${id}/movie_credits` }
-        case 'person-tv-credits':
-          if (!id) return null
-          return { path: `/person/${id}/tv_credits` }
-        case 'movie-genres':
-          return { path: '/genre/movie/list' }
-        case 'tv-genres':
-          return { path: '/genre/tv/list' }
-        case 'movie-recommendations':
-          if (!id) return null
-          return { path: `/movie/${id}/recommendations`, query: { page } }
-        case 'tv-recommendations':
-          if (!id) return null
-          return { path: `/tv/${id}/recommendations`, query: { page } }
-        case 'similar-movies':
-          if (!id) return null
-          return { path: `/movie/${id}/similar`, query: { page } }
-        case 'similar-tv':
-          if (!id) return null
-          return { path: `/tv/${id}/similar`, query: { page } }
-        case 'discover-movies': {
-          const q = {
-            sort_by: params.sort,
-            with_genres: params.genres,
-            with_original_language: params.languages,
-            page: params.page,
-            'vote_average.gte': params.minRating,
-          }
-          return { path: '/discover/movie', query: q }
+  const mapActionToEndpoint = (): { path: string; query?: Record<string, any> } | null => {
+    const id = params.id
+    const page = params.page
+    const query = params.query
+    switch (action) {
+      case 'popular-movies':
+        return { path: '/movie/popular', query: { page } }
+      case 'top-rated-movies':
+        return { path: '/movie/top_rated', query: { page } }
+      case 'popular-tv':
+        return { path: '/tv/popular', query: { page } }
+      case 'top-rated-tv':
+        return { path: '/tv/top_rated', query: { page } }
+      case 'trending':
+        return { path: '/trending/all/day' }
+      case 'movie-details':
+        if (!id) return null
+        return { path: `/movie/${id}`, query: { append_to_response: 'credits,videos,images,similar,recommendations' } }
+      case 'tv-details':
+        if (!id) return null
+        return { path: `/tv/${id}`, query: { append_to_response: 'credits,videos,images,similar,recommendations' } }
+      case 'movie-images':
+        if (!id) return null
+        return { path: `/movie/${id}/images`, query: { include_image_language: 'zh,en,null' } }
+      case 'tv-images':
+        if (!id) return null
+        return { path: `/tv/${id}/images`, query: { include_image_language: 'zh,en,null' } }
+      case 'search':
+        if (!query) return null
+        return { path: '/search/multi', query: { query } }
+      case 'person-details':
+        if (!id) return null
+        return { path: `/person/${id}`, query: { append_to_response: 'combined_credits' } }
+      case 'person-movie-credits':
+        if (!id) return null
+        return { path: `/person/${id}/movie_credits` }
+      case 'person-tv-credits':
+        if (!id) return null
+        return { path: `/person/${id}/tv_credits` }
+      case 'movie-genres':
+        return { path: '/genre/movie/list' }
+      case 'tv-genres':
+        return { path: '/genre/tv/list' }
+      case 'movie-recommendations':
+        if (!id) return null
+        return { path: `/movie/${id}/recommendations`, query: { page } }
+      case 'tv-recommendations':
+        if (!id) return null
+        return { path: `/tv/${id}/recommendations`, query: { page } }
+      case 'similar-movies':
+        if (!id) return null
+        return { path: `/movie/${id}/similar`, query: { page } }
+      case 'similar-tv':
+        if (!id) return null
+        return { path: `/tv/${id}/similar`, query: { page } }
+      case 'discover-movies': {
+        const q = {
+          sort_by: params.sort,
+          with_genres: params.genres,
+          with_original_language: params.languages,
+          page: params.page,
+          'vote_average.gte': params.minRating,
         }
-        case 'discover-tv': {
-          const q = {
-            sort_by: params.sort,
-            with_genres: params.genres,
-            with_original_language: params.languages,
-            page: params.page,
-            'vote_average.gte': params.minRating,
-          }
-          return { path: '/discover/tv', query: q }
+        return { path: '/discover/movie', query: q }
+      }
+      case 'discover-tv': {
+        const q = {
+          sort_by: params.sort,
+          with_genres: params.genres,
+          with_original_language: params.languages,
+          page: params.page,
+          'vote_average.gte': params.minRating,
         }
-        default:
-          return null
+        return { path: '/discover/tv', query: q }
       }
-    }
-
-    const mapped = mapActionToEndpoint()
-    if (mapped) {
-      const baseQuery: Record<string, any> = {
-        api_key: config.apiKey,
-        language: 'zh-CN',
-      }
-      const extra = Object.fromEntries(
-        Object.entries(mapped.query || {}).filter(([, v]) => v !== undefined && v !== null && v !== '')
-      )
-      const search = new URLSearchParams({ ...baseQuery, ...extra })
-      const url = `${config.apiBaseUrl}/3${mapped.path}?${search.toString()}`
-      console.log('直接请求TMDB:', url)
-      return await $fetch(url)
+      default:
+        return null
     }
   }
 
-  // 走后端，由后端决定是否使用代理
-  console.log('通过后端API请求TMDB:', action)
-  const response = await $fetch<{ success: boolean; data: any }>('/api/tmdb', {
-    query: { action, ...params }
-  })
-  if (!response.success) throw new Error('TMDB请求失败')
-  return response.data
+  const mapped = mapActionToEndpoint()
+  if (mapped) {
+    const baseQuery: Record<string, any> = {
+      api_key: config.apiKey,
+      language: 'zh-CN',
+    }
+    const extra = Object.fromEntries(
+      Object.entries(mapped.query || {}).filter(([, v]) => v !== undefined && v !== null && v !== '')
+    )
+    const search = new URLSearchParams({ ...baseQuery, ...extra })
+    const url = `${config.apiBaseUrl}/3${mapped.path}?${search.toString()}`
+    return await $fetch(url)
+  }
+
+  throw new Error('未知的 TMDB 动作')
 }
 
 export const useTMDBQuery = () => {

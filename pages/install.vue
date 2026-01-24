@@ -108,80 +108,7 @@
                 </p>
               </div>
 
-              <div class="flex items-center">
-                <input
-                  v-model="formData.proxyEnabled"
-                  type="checkbox"
-                  id="proxy-enabled"
-                  class="w-4 h-4 text-primary border-surface-300 rounded focus:ring-primary"
-                />
-                <label for="proxy-enabled" class="ml-2 text-sm text-surface-700 dark:text-surface-300">
-                  {{ t('enable_proxy') }}
-                </label>
-              </div>
-
-              <div v-if="formData.proxyEnabled" class="space-y-4">
-                <div>
-                  <label class="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-2">
-                    {{ t('http_proxy_address') }}
-                  </label>
-                  <input
-                    v-model="formData.httpProxy"
-                    type="text"
-                    placeholder="http://127.0.0.1:7890"
-                    class="w-full px-4 py-3 border border-surface-300 dark:border-surface-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-surface-50 dark:bg-surface-800 text-surface-900 dark:text-surface-100"
-                  />
-                  <p class="text-xs text-surface-500 mt-1">
-                    {{ t('http_proxy_help') }}
-                  </p>
-                </div>
-
-                <div>
-                  <label class="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-2">
-                    {{ t('https_proxy_address') }}
-                  </label>
-                  <input
-                    v-model="formData.httpsProxy"
-                    type="text"
-                    placeholder="http://127.0.0.1:7890"
-                    class="w-full px-4 py-3 border border-surface-300 dark:border-surface-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-surface-50 dark:bg-surface-800 text-surface-900 dark:text-surface-100"
-                  />
-                  <p class="text-xs text-surface-500 mt-1">
-                    {{ t('https_proxy_help') }}
-                  </p>
-                </div>
-
-                <div>
-                  <label class="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-2">
-                    {{ t('socks5_proxy_address') }}
-                  </label>
-                  <input
-                    v-model="formData.allProxy"
-                    type="text"
-                    placeholder="socks5://127.0.0.1:7890"
-                    class="w-full px-4 py-3 border border-surface-300 dark:border-surface-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-surface-50 dark:bg-surface-800 text-surface-900 dark:text-surface-100"
-                  />
-                  <p class="text-xs text-surface-500 mt-1">
-                    {{ t('socks5_proxy_help') }}
-                  </p>
-                </div>
-
-                <div>
-                  <label class="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-2">
-                    {{ t('installation_general_proxy') }}
-                  </label>
-                  <input
-                    v-model="formData.proxyUrl"
-                    type="text"
-                    placeholder="http://your-proxy-server.com"
-                    class="w-full px-4 py-3 border border-surface-300 dark:border-surface-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-surface-50 dark:bg-surface-800 text-surface-900 dark:text-surface-100"
-                  />
-                  <p class="text-xs text-surface-500 mt-1">
-                    {{ t('tmdb_api_base_url_help') }}
-                  </p>
-                </div>
-              </div>
-
+              
               <!-- API 连接测试结果 -->
               <div v-if="apiTestResult !== null" class="p-3 rounded-lg" :class="apiTestResult ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'">
                 <div class="flex items-center">
@@ -193,7 +120,6 @@
                   <ul class="list-disc list-inside space-y-1 text-xs">
                     <li>{{ t('installation_check_network_connection') }}</li>
                     <li>{{ t('installation_confirm_api_key') }}</li>
-                    <li>{{ t('installation_enable_proxy_settings') }}</li>
                     <li>{{ t('installation_try_different_api_base_url') }}</li>
                   </ul>
                   <div class="mt-3 space-y-2">
@@ -325,13 +251,7 @@
                 <h3 class="font-semibold text-surface-900 dark:text-surface-100 mb-2">{{ t('installation_tmdb_api_config') }}</h3>
                 <p class="text-sm text-surface-600 dark:text-surface-400">{{ t('installation_api_key') }}: {{ maskApiKey(formData.tmdbApiKey) }}</p>
                 <p class="text-sm text-surface-600 dark:text-surface-400">{{ t('installation_base_url') }}: {{ formData.tmdbApiBaseUrl }}</p>
-                <div v-if="formData.proxyEnabled" class="mt-2">
-                  <p class="text-sm text-surface-600 dark:text-surface-400">{{ t('installation_http_proxy') }}: {{ formData.httpProxy }}</p>
-                  <p class="text-sm text-surface-600 dark:text-surface-400">{{ t('installation_https_proxy') }}: {{ formData.httpsProxy }}</p>
-                  <p class="text-sm text-surface-600 dark:text-surface-400">{{ t('installation_socks5_proxy') }}: {{ formData.allProxy }}</p>
-                  <p v-if="formData.proxyUrl" class="text-sm text-surface-600 dark:text-surface-400">{{ t('installation_general_proxy') }}: {{ formData.proxyUrl }}</p>
                 </div>
-              </div>
 
               <div class="p-4 bg-surface-50 dark:bg-surface-800 rounded-lg">
                 <h3 class="font-semibold text-surface-900 dark:text-surface-100 mb-2">{{ t('installation_admin_account') }}</h3>
@@ -447,11 +367,7 @@ const testTMDBConnection = async () => {
       method: 'POST',
       body: {
         apiKey: formData.value.tmdbApiKey,
-        baseUrl: formData.value.tmdbApiBaseUrl,
-        proxyUrl: formData.value.proxyEnabled ? formData.value.proxyUrl : undefined,
-        httpProxy: formData.value.proxyEnabled ? formData.value.httpProxy : undefined,
-        httpsProxy: formData.value.proxyEnabled ? formData.value.httpsProxy : undefined,
-        allProxy: formData.value.proxyEnabled ? formData.value.allProxy : undefined
+        baseUrl: formData.value.tmdbApiBaseUrl
       }
     })
     apiTestResult.value = response.success
@@ -480,11 +396,6 @@ const startInstallation = async () => {
         tmdbApiKey: formData.value.tmdbApiKey,
         tmdbApiBaseUrl: formData.value.tmdbApiBaseUrl,
         tmdbImageBaseUrl: formData.value.tmdbImageBaseUrl,
-        proxyEnabled: formData.value.proxyEnabled,
-        proxyUrl: formData.value.proxyUrl,
-        httpProxy: formData.value.proxyEnabled ? formData.value.httpProxy : undefined,
-        httpsProxy: formData.value.proxyEnabled ? formData.value.httpsProxy : undefined,
-        allProxy: formData.value.proxyEnabled ? formData.value.allProxy : undefined,
         username: formData.value.username,
         nickname: formData.value.nickname,
         password: formData.value.password

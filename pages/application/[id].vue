@@ -269,19 +269,36 @@
 
                 <!-- 文件上传 -->
                 <div v-else-if="field.field_type === 'file'">
-                  <input
-                    type="file"
-                    :accept="'image/*'"
-                    @change="handleFileUpload($event, field.field_key)"
-                    :required="field.is_required"
-                    class="w-full px-4 py-3 border border-surface-300 dark:border-surface-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-surface-50 dark:bg-surface-800 text-surface-900 dark:text-surface-100"
-                  />
-                  <div v-if="formData[field.field_key]" class="mt-2">
+                  <div class="relative">
+                    <input
+                      type="file"
+                      :accept="'image/jpeg,image/jpg,image/png,image/gif,image/webp'"
+                      @change="handleFileUpload($event, field.field_key)"
+                      :required="field.is_required"
+                      :disabled="uploadLoading[field.field_key]"
+                      class="w-full px-4 py-3 border border-surface-300 dark:border-surface-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-surface-50 dark:bg-surface-800 text-surface-900 dark:text-surface-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                    />
+                    <div v-if="uploadLoading[field.field_key]" class="absolute right-4 top-1/2 -translate-y-1/2">
+                      <i class="pi pi-spin pi-spinner text-primary-500"></i>
+                    </div>
+                  </div>
+                  <p class="mt-1 text-xs text-surface-500 dark:text-surface-400">
+                    {{ t('image_upload_hint') }}
+                  </p>
+                  <div v-if="formData[field.field_key]" class="mt-3">
                     <img 
                       :src="formData[field.field_key]" 
                       alt="Preview"
                       class="max-w-xs rounded-lg border border-surface-200 dark:border-surface-700"
                     />
+                    <button
+                      type="button"
+                      @click="formData[field.field_key] = undefined"
+                      class="mt-2 text-sm text-red-500 hover:text-red-600 flex items-center gap-1"
+                    >
+                      <i class="pi pi-times"></i>
+                      {{ t('remove_image') }}
+                    </button>
                   </div>
                 </div>
               </div>
@@ -314,6 +331,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { useNetdiskApplications } from '../../composables/useNetdiskApplications'
 import { useMoviCloudAPI, type NetdiskProject, type ApplicationField } from '../../composables/useMoviCloudAPI'
 import { t } from '../../composables/useI18n'
+import { useToast } from 'primevue/usetoast'
 
 // 定义页面元信息，确保路由正确匹配
 definePageMeta({
@@ -343,9 +361,13 @@ const {
   submitApplication
 } = useNetdiskApplications()
 
+const { uploadNetdiskImage } = useMoviCloudAPI()
+const toast = useToast()
+
 const formData = ref<Record<string, any>>({})
 const submitLoading = ref(false)
 const submitError = ref<string | null>(null)
+const uploadLoading = ref<Record<string, boolean>>({})
 
 // 获取项目信息
 const project = computed<NetdiskProject | null>(() => {
@@ -396,17 +418,61 @@ const isFormValid = computed(() => {
 })
 
 // 处理文件上传
-const handleFileUpload = (event: Event, fieldKey: string) => {
+const handleFileUpload = async (event: Event, fieldKey: string) => {
   const input = event.target as HTMLInputElement
   const file = input.files?.[0]
   
-  if (file) {
-    const reader = new FileReader()
-    reader.onload = (e) => {
-      const result = e.target?.result as string
-      formData.value[fieldKey] = result // 存储为 base64
-    }
-    reader.readAsDataURL(file)
+  if (!file) return
+  
+  // 验证文件类型
+  const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp']
+  if (!allowedTypes.includes(file.type)) {
+    toast.add({
+      severity: 'error',
+      summary: t('error'),
+      detail: t('invalid_image_format'),
+      life: 3000
+    })
+    input.value = '' // 清空输入
+    return
+  }
+  
+  // 验证文件大小（5MB）
+  const maxSize = 5 * 1024 * 1024
+  if (file.size > maxSize) {
+    toast.add({
+      severity: 'error',
+      summary: t('error'),
+      detail: t('image_too_large'),
+      life: 3000
+    })
+    input.value = '' // 清空输入
+    return
+  }
+  
+  uploadLoading.value[fieldKey] = true
+  
+  try {
+    const result = await uploadNetdiskImage(file)
+    formData.value[fieldKey] = result.url // 存储上传后的 URL
+    
+    toast.add({
+      severity: 'success',
+      summary: t('success'),
+      detail: t('image_upload_success'),
+      life: 2000
+    })
+  } catch (error: any) {
+    toast.add({
+      severity: 'error',
+      summary: t('error'),
+      detail: error.message || t('image_upload_failed'),
+      life: 3000
+    })
+    input.value = '' // 清空输入
+    formData.value[fieldKey] = undefined
+  } finally {
+    uploadLoading.value[fieldKey] = false
   }
 }
 

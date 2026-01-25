@@ -316,11 +316,12 @@ export interface MemberApplication {
     id: number
     name: string
     icon: string
+    theme_color?: string
   }
   status: 'pending' | 'approved' | 'rejected'
-  application_materials: Record<string, any>
+  application_materials: Record<string, any> | Array<{ key: string; label: string; value: any }>
   reject_reason: string | null
-  reviewer: string | null
+  reviewer: string | null | { id: number; username: string; email: string }
   reviewed_at: string | null
   created_at: string
 }
@@ -350,7 +351,66 @@ const submitMemberApplication = async (data: SubmitMemberApplicationRequest): Pr
 
 // 查看我的申请
 const getMyApplications = async (): Promise<MemberApplication[]> => {
-  return await request('/api/netdisk-applications/member/my')
+  const response = await request('/api/netdisk-applications/member/my')
+  // API 返回的是分页数据，需要从 data.data 中获取实际的申请记录数组
+  if (response && response.data && Array.isArray(response.data)) {
+    return response.data
+  }
+  // 如果返回的已经是数组，直接返回
+  if (Array.isArray(response)) {
+    return response
+  }
+  return []
+}
+
+// 上传网盘申请图片
+interface UploadImageResponse {
+  url: string
+  path: string
+}
+
+const uploadNetdiskImage = async (file: File): Promise<UploadImageResponse> => {
+  const { error: devError } = useDev()
+  
+  try {
+    // 验证文件类型
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp']
+    if (!allowedTypes.includes(file.type)) {
+      throw new Error('不支持的图片格式，仅支持 jpeg, jpg, png, gif, webp')
+    }
+    
+    // 验证文件大小（5MB）
+    const maxSize = 5 * 1024 * 1024 // 5MB
+    if (file.size > maxSize) {
+      throw new Error('图片大小不能超过 5MB')
+    }
+    
+    const systemId = await getSystemIdFromDatabase()
+    const formData = new FormData()
+    formData.append('image', file)
+    
+    const response = await fetch(`${API_BASE_URL}/api/netdisk-applications/upload-image`, {
+      method: 'POST',
+      headers: {
+        'X-System-ID': systemId,
+        'X-Client-Version': CLIENT_VERSION,
+        'X-Request-Timestamp': Date.now().toString()
+        // 不设置 Content-Type，让浏览器自动设置 multipart/form-data 边界
+      },
+      body: formData
+    })
+    
+    const data = await response.json()
+    
+    if (!data.success) {
+      throw new Error(data.message || '图片上传失败')
+    }
+    
+    return data.data
+  } catch (error) {
+    devError('图片上传失败:', error)
+    throw error
+  }
 }
 
 // API响应类型
@@ -442,6 +502,7 @@ export const useMoviCloudAPI = () => {
     getNetdiskProjectDetails,
     submitMemberApplication,
     getMyApplications,
+    uploadNetdiskImage,
     
     // 工具函数
     getSystemIdFromDatabase

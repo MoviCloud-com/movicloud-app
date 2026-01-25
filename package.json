@@ -1,5 +1,6 @@
 {
-  "name": "volt-nuxt",
+  "name": "movicloud",
+  "version": "1.0.1",
   "private": true,
   "type": "module",
   "scripts": {

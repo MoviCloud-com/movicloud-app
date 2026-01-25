@@ -83,6 +83,14 @@
             </div>
           </div>
           
+          <!-- 错误提示 -->
+          <div v-if="error" class="p-3 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 rounded-lg">
+            <div class="flex items-center">
+              <i class="pi pi-exclamation-triangle mr-2"></i>
+              <span>{{ error }}</span>
+            </div>
+          </div>
+          
           <button
             @click="handleLogin"
             :disabled="loading"
@@ -95,7 +103,7 @@
 
         <div class="mt-6 text-center">
           <p class="text-sm text-surface-600 dark:text-surface-400">
-            还没有账户？请联系管理员创建账户
+            {{ t('contact_admin') }}
           </p>
         </div>
       </div>
@@ -107,8 +115,10 @@
 <script setup lang="ts">
 import { useRouter } from 'vue-router'
 import { t } from '../composables/useI18n'
+import { useToast } from 'primevue/usetoast'
 
 const router = useRouter()
+const toast = useToast()
 
 // 表单数据
 const formData = ref({
@@ -123,7 +133,12 @@ const error = ref('')
 // 处理登录
 const handleLogin = async () => {
   if (!formData.value.username || !formData.value.password) {
-    error.value = '请填写用户名和密码'
+    toast.add({
+      severity: 'error',
+      summary: t('error'),
+      detail: t('username_required') + ' ' + t('password_required'),
+      life: 3000
+    })
     return
   }
 
@@ -151,13 +166,38 @@ const handleLogin = async () => {
       localStorage.setItem('user', JSON.stringify(response.data.user))
       localStorage.setItem('token', response.data.token)
       
-      // 跳转到首页
-      router.push('/')
+      toast.add({
+        severity: 'success',
+        summary: t('success'),
+        detail: t('login_success'),
+        life: 2000
+      })
+      
+      // 延迟跳转到首页，让用户看到成功提示
+      setTimeout(() => {
+        router.push('/')
+      }, 500)
     } else {
-      error.value = response.message || '登录失败'
+      // 显示错误提示
+      const errorMessage = response.message || 'login_failed'
+      toast.add({
+        severity: 'error',
+        summary: t('error'),
+        detail: t(errorMessage),
+        life: 3000
+      })
+      error.value = t(errorMessage)
     }
-  } catch (err) {
-    error.value = '网络错误，请重试'
+  } catch (err: any) {
+    // 处理网络错误或API错误
+    const errorMessage = err.data?.message || err.message || 'login_failed'
+    toast.add({
+      severity: 'error',
+      summary: t('error'),
+      detail: t(errorMessage),
+      life: 3000
+    })
+    error.value = t(errorMessage)
   } finally {
     loading.value = false
   }

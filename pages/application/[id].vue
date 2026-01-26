@@ -67,8 +67,7 @@
               >
                 <div class="flex-shrink-0">
                   <div 
-                    class="w-8 h-8 rounded-full flex items-center justify-center text-white font-bold"
-                    :style="{ backgroundColor: project.theme_color }"
+                    class="w-8 h-8 rounded-full flex items-center justify-center text-white font-bold bg-primary-500"
                   >
                     {{ index + 1 }}
                   </div>

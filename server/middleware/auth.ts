@@ -25,8 +25,8 @@ export default defineEventHandler(async (event) => {
   // 特殊处理 install 路由
   if (url.pathname === '/install') {
     try {
-      const { dbManager } = await import('../database/database')
-      const isInstalled = await dbManager.isInstalled()
+      const { configManager } = await import('../utils/config-manager')
+      const isInstalled = configManager.isInstalled()
       
       if (isInstalled) {
         return sendRedirect(event, '/login', 302)
@@ -48,8 +48,8 @@ export default defineEventHandler(async (event) => {
 
   // 检查是否已安装
   try {
-    const { dbManager } = await import('../database/database')
-    const isInstalled = await dbManager.isInstalled()
+    const { configManager } = await import('../utils/config-manager')
+    const isInstalled = configManager.isInstalled()
     
     if (!isInstalled) {
       return sendRedirect(event, '/install', 302)

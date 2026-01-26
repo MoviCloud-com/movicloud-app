@@ -1,13 +1,13 @@
-import { dbManager } from '../../database/database'
+import { configManager } from '../../utils/config-manager'
 import { devLog, devError } from '../../utils/dev'
 import { createFetchOptions } from '../../utils/http'
 
-// 从数据库加载TMDB配置
-const loadTMDBConfig = async () => {
+// 从配置文件加载TMDB配置
+const loadTMDBConfig = () => {
   try {
-    const apiKey = await dbManager.getSetting('tmdb_api_key')
-    const apiBaseUrl = await dbManager.getSetting('tmdb_api_base_url') || 'https://api.tmdb.org'
-    const imageBaseUrl = await dbManager.getSetting('tmdb_image_base_url') || 'https://image.tmdb.org/t/p'
+    const apiKey = configManager.getSetting('tmdb_api_key')
+    const apiBaseUrl = configManager.getSetting('tmdb_api_base_url') || 'https://api.tmdb.org'
+    const imageBaseUrl = configManager.getSetting('tmdb_image_base_url') || 'https://image.tmdb.org/t/p'
     
     return {
       apiKey,
@@ -20,10 +20,10 @@ const loadTMDBConfig = async () => {
   }
 }
 
-// 从数据库加载语言设置
-const loadLanguageConfig = async () => {
+// 从配置文件加载语言设置
+const loadLanguageConfig = () => {
   try {
-    const language = await dbManager.getSetting('language') || 'zh-CN'
+    const language = configManager.getSetting('language') || 'zh-CN'
     return language
   } catch (error) {
     devError('加载语言配置失败:', error)
@@ -34,9 +34,9 @@ const loadLanguageConfig = async () => {
 // 使用fetch进行TMDB请求（直连/环境代理）
 const makeTMDBRequest = async (endpoint: string) => {
   try {
-    const apiKey = await dbManager.getSetting('tmdb_api_key')
-    const baseUrl = await dbManager.getSetting('tmdb_api_base_url') || 'https://api.tmdb.org'
-    const language = await loadLanguageConfig()
+    const apiKey = configManager.getSetting('tmdb_api_key')
+    const baseUrl = configManager.getSetting('tmdb_api_base_url') || 'https://api.tmdb.org'
+    const language = loadLanguageConfig()
     
     if (!apiKey) {
       throw new Error('TMDB API密钥未配置')

@@ -56,10 +56,6 @@ services:
       # Optional: timezone & JWT secret
       - TZ=Asia/Shanghai
       - JWT_SECRET=your-strong-secret
-      # Optional: proxy in restricted networks (only if needed)
-      # - HTTP_PROXY=http://host.docker.internal:7890
-      # - HTTPS_PROXY=http://host.docker.internal:7890
-      # - NO_PROXY=localhost,127.0.0.1
     volumes:
       - movi_data:/movicloud-app/data
 volumes:
@@ -78,7 +74,6 @@ docker compose up -d
 2. Configure in the wizard:
    - TMDB API Key
    - Language and Theme
-   - Network proxy (if needed)
    - Admin account creation
 3. You can change all settings later on the Settings page.
 
@@ -89,11 +84,13 @@ Note: frequently used settings are cached on the client; caches refresh after ch
 ## 3. Persistence and Paths
 
 - App data: `/movicloud-app/data`
-  - Database: `/movicloud-app/data/movicloud.db`
+  - Configuration: `/movicloud-app/data/movicloud.conf` (settings, users, installation status)
   - Avatars: `/movicloud-app/data/uploads/avatars`
 - Logs: `/movicloud-app/logs` (optional mount)
 - In production, uploaded files are served under: `/uploads/avatars/<filename>`
   - Example: `http://<your-domain>/uploads/avatars/avatar_1690000000000.png`
+
+> **Note**: Starting from version 1.0.2, the application uses a `.conf` file (similar to qBittorrent's configuration format) instead of a database. All settings, user data, and installation status are stored in `movicloud.conf`. If you're upgrading from an older version, the system will automatically migrate data from the old database to the new configuration file.
 
 Use either named volumes or bind mounts, e.g.:
 ```bash
@@ -122,10 +119,12 @@ docker compose up -d
 ```
 - Roll back to a specific version:
 ```bash
-docker run -d ... movicloud/movicloud-app:1.0.1
+docker run -d ... movicloud/movicloud-app:1.0.2
 ```
 
-Image tags: `latest` and semantic versions like `1.0.1`, `1.0`.
+Image tags: `latest` and semantic versions like `1.0.2`, `1.0.1`, `1.0`.
+
+> **Upgrade Note**: If upgrading from version 1.0.1 or earlier, the system will automatically migrate data from the old database (`movicloud.db`) to the new configuration file (`movicloud.conf`) on first startup. The old database file will remain but is no longer used.
 
 ---
 
@@ -141,7 +140,6 @@ Image tags: `latest` and semantic versions like `1.0.1`, `1.0`.
   - If using a host directory, ensure write permission (named volume recommended)
 
 - Q: Slow image/TMDB access in restricted networks?
-  - Configure proxy in the wizard or Settings; or set `HTTP_PROXY/HTTPS_PROXY` in env
   - TMDB image base URL is cached; caches refresh after changes
 
 - Q: Health check?
@@ -281,9 +279,6 @@ The following features are planned for future releases:
   
   ![TMDB Settings](screenshots/settings-tmdb.png)
 
-- System Proxy Settings:
-  
-  ![System Proxy Settings](screenshots/settings-proxy.png)
 
 - Language Settings:
   

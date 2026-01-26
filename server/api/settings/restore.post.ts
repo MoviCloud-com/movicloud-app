@@ -1,10 +1,6 @@
-import { dbManager } from '../../database/database'
+import { configManager } from '../../utils/config-manager'
 import { devLog, devError } from '../../utils/dev'
 import { readMultipartFormData } from 'h3'
-import { readFile } from 'fs/promises'
-import { tmpdir } from 'os'
-import { join } from 'path'
-import { writeFile, unlink } from 'fs/promises'
 
 export default defineEventHandler(async (event) => {
   try {
@@ -30,7 +26,7 @@ export default defineEventHandler(async (event) => {
       throw createError({ statusCode: 400, statusMessage: 'invalid_backup_file_format' })
     }
     
-    devLog('开始恢复数据库...')
+    devLog('开始恢复配置...')
     
     // 读取文件内容
     const fileContent = fileData.data.toString('utf-8')
@@ -42,75 +38,70 @@ export default defineEventHandler(async (event) => {
       throw createError({ statusCode: 400, statusMessage: 'invalid_backup_file_format' })
     }
     
-    // 验证备份文件格式
-    if (!backup.version || !backup.tables) {
+    // 验证备份文件格式（支持新旧两种格式）
+    const isOldFormat = backup.version && backup.tables
+    const isNewFormat = backup.version && (backup.config || backup.settings || backup.users)
+    
+    if (!isOldFormat && !isNewFormat) {
       throw createError({ statusCode: 400, statusMessage: 'invalid_backup_file_format' })
     }
     
-    // 获取数据库实例
-    if (!dbManager['db']) {
-      await dbManager['initialize']()
-    }
-    const db = dbManager['db']!
-    
-    // 开始事务
-    await db.run('BEGIN TRANSACTION')
-    
     try {
-      // 恢复 users 表
-      if (backup.tables.users && Array.isArray(backup.tables.users)) {
-        // 先清空表并重置自增ID
-        await db.run('DELETE FROM users')
-        await db.run('DELETE FROM sqlite_sequence WHERE name = "users"')
-        // 插入数据
-        for (const user of backup.tables.users) {
-          await db.run(
-            'INSERT INTO users (id, username, nickname, password_hash, email, avatar, role, is_active, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-            [user.id, user.username, user.nickname, user.password_hash, user.email, user.avatar, user.role, user.is_active || 1, user.created_at, user.updated_at]
-          )
+      if (isNewFormat) {
+        // 新格式：直接恢复配置
+        if (backup.config) {
+          // 恢复整个配置
+          for (const [section, data] of Object.entries(backup.config)) {
+            configManager.setSection(section, data as any)
+          }
+          devLog('恢复了配置数据')
         }
-        devLog(`恢复了 ${backup.tables.users.length} 条用户记录`)
+        
+        // 恢复设置（兼容性）
+        if (backup.settings) {
+          for (const [key, value] of Object.entries(backup.settings)) {
+            configManager.setSetting(key, value as string)
+          }
+          devLog('恢复了设置数据')
+        }
+        
+        // 恢复用户（需要特殊处理，因为用户存储格式不同）
+        if (backup.users && Array.isArray(backup.users)) {
+          // 注意：用户恢复需要重新创建，因为密码哈希不能直接恢复
+          devLog(`备份文件包含 ${backup.users.length} 个用户，但用户数据需要手动重新创建`)
+        }
+      } else if (isOldFormat) {
+        // 旧格式：从数据库备份迁移到配置文件
+        // 恢复 settings
+        if (backup.tables.settings && Array.isArray(backup.tables.settings)) {
+          for (const setting of backup.tables.settings) {
+            configManager.setSetting(setting.key, setting.value)
+          }
+          devLog(`恢复了 ${backup.tables.settings.length} 条设置记录`)
+        }
+        
+        // 恢复 installation
+        if (backup.tables.installation && Array.isArray(backup.tables.installation)) {
+          const install = backup.tables.installation[0]
+          if (install) {
+            configManager.set('Application', 'Installed', install.is_installed || false)
+            configManager.set('Application', 'InstalledAt', install.installed_at || '')
+            configManager.set('Application', 'Version', install.version || '1.0.2')
+          }
+          devLog('恢复了安装状态')
+        }
+        
+        // 用户数据需要手动处理（密码哈希不能直接恢复）
+        if (backup.tables.users && Array.isArray(backup.tables.users)) {
+          devLog(`备份文件包含 ${backup.tables.users.length} 个用户，但用户数据需要手动重新创建`)
+        }
       }
       
-      // 恢复 settings 表
-      if (backup.tables.settings && Array.isArray(backup.tables.settings)) {
-        // 先清空表并重置自增ID
-        await db.run('DELETE FROM settings')
-        await db.run('DELETE FROM sqlite_sequence WHERE name = "settings"')
-        // 插入数据
-        for (const setting of backup.tables.settings) {
-          await db.run(
-            'INSERT INTO settings (id, key, value, description, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)',
-            [setting.id, setting.key, setting.value, setting.description || null, setting.created_at, setting.updated_at]
-          )
-        }
-        devLog(`恢复了 ${backup.tables.settings.length} 条设置记录`)
-      }
-      
-      // 恢复 installation 表
-      if (backup.tables.installation && Array.isArray(backup.tables.installation)) {
-        // 先清空表并重置自增ID
-        await db.run('DELETE FROM installation')
-        await db.run('DELETE FROM sqlite_sequence WHERE name = "installation"')
-        // 插入数据
-        for (const install of backup.tables.installation) {
-          await db.run(
-            'INSERT INTO installation (id, is_installed, installed_at, version, created_at) VALUES (?, ?, ?, ?, ?)',
-            [install.id, install.is_installed || 0, install.installed_at, install.version, install.created_at]
-          )
-        }
-        devLog(`恢复了 ${backup.tables.installation.length} 条安装记录`)
-      }
-      
-      // 提交事务
-      await db.run('COMMIT')
-      
-      devLog('数据库恢复完成')
+      devLog('配置恢复完成')
       
       return { success: true, message: 'restore_success' }
     } catch (error) {
-      // 回滚事务
-      await db.run('ROLLBACK')
+      devError('恢复失败:', error)
       throw error
     }
   } catch (error) {

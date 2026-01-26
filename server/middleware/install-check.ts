@@ -1,4 +1,4 @@
-import { dbManager } from '../database/database'
+import { configManager } from '../utils/config-manager'
 import { devError } from '../utils/dev'
 
 export default defineEventHandler(async (event) => {
@@ -9,7 +9,7 @@ export default defineEventHandler(async (event) => {
   }
 
   try {
-    const isInstalled = await dbManager.isInstalled()
+    const isInstalled = configManager.isInstalled()
     
     // 如果未安装且不是安装页面，重定向到安装页面
     if (!isInstalled && url.pathname !== '/install') {

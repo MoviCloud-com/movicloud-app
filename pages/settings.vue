@@ -390,9 +390,24 @@ const fetchVersionInfo = async () => {
         updateAvailable: response.updateAvailable,
         latestRelease: response.latestRelease
       }
+    } else {
+      // 即使 success 为 false，也更新显示（至少显示当前版本）
+      versionInfo.value = {
+        currentVersion: response.currentVersion || '1.0.2',
+        latestVersion: response.latestVersion || '1.0.2',
+        updateAvailable: false,
+        latestRelease: null
+      }
     }
   } catch (error) {
     devError('获取版本信息失败:', error)
+    // 出错时至少显示当前版本
+    versionInfo.value = {
+      currentVersion: '1.0.2',
+      latestVersion: '1.0.2',
+      updateAvailable: false,
+      latestRelease: null
+    }
   } finally {
     versionLoading.value = false
   }
@@ -896,11 +911,17 @@ useHead({
               </div>
               <div class="space-y-2 text-sm">
                 <div class="flex justify-between">
-                  <span class="text-surface-600 dark:text-surface-400">{{ t('app_version') }}</span>
+                  <span class="text-surface-600 dark:text-surface-400 flex items-center gap-2">
+                    <i class="pi pi-tag text-surface-400"></i>
+                    {{ t('app_version') }}
+                  </span>
                   <span class="text-surface-900 dark:text-surface-0 font-medium">{{ versionInfo.currentVersion }}</span>
                 </div>
                 <div class="flex justify-between">
-                  <span class="text-surface-600 dark:text-surface-400">{{ t('latest_version') }}</span>
+                  <span class="text-surface-600 dark:text-surface-400 flex items-center gap-2">
+                    <i class="pi pi-download text-surface-400"></i>
+                    {{ t('latest_version') }}
+                  </span>
                   <div class="flex items-center gap-2">
                     <span class="text-surface-900 dark:text-surface-0 font-medium">{{ versionInfo.latestVersion }}</span>
                     <span
@@ -929,32 +950,11 @@ useHead({
                   </a>
                 </div>
                 <div class="flex justify-between mt-2">
-                  <span class="text-surface-600 dark:text-surface-400">{{ t('build_date') }}</span>
+                  <span class="text-surface-600 dark:text-surface-400 flex items-center gap-2">
+                    <i class="pi pi-calendar text-surface-400"></i>
+                    {{ t('build_date') }}
+                  </span>
                   <span class="text-surface-900 dark:text-surface-0 font-medium">{{ new Date().toLocaleDateString() }}</span>
-                </div>
-              </div>
-            </div>
-            
-            <!-- 系统信息 -->
-            <div class="bg-surface-50 dark:bg-surface-700 rounded-lg p-4">
-              <h4 class="font-medium text-surface-900 dark:text-surface-0 mb-3 flex items-center gap-2">
-                <i class="pi pi-server text-primary-500"></i>
-                {{ t('system_info') }}
-              </h4>
-              <div class="space-y-2 text-sm">
-                <div class="flex justify-between items-center">
-                  <span class="text-surface-600 dark:text-surface-400 flex items-center gap-2">
-                    <i class="pi pi-code text-surface-400"></i>
-                    {{ t('framework') }}
-                  </span>
-                  <span class="text-surface-900 dark:text-surface-0 font-medium">Nuxt.js</span>
-                </div>
-                <div class="flex justify-between items-center">
-                  <span class="text-surface-600 dark:text-surface-400 flex items-center gap-2">
-                    <i class="pi pi-database text-surface-400"></i>
-                    {{ t('database') }}
-                  </span>
-                  <span class="text-surface-900 dark:text-surface-0 font-medium">SQLite</span>
                 </div>
               </div>
             </div>

@@ -1,12 +1,12 @@
-import { dbManager } from '../../database/database'
+import { configManager } from '../../utils/config-manager'
 import { devError } from '../../utils/dev'
 
 export default defineEventHandler(async (event) => {
   try {
-    const siteName = await dbManager.getSetting('site_name') || 'MoviCloud'
-    const siteDescription = await dbManager.getSetting('site_description') || '影视云盘'
-    const themeMode = await dbManager.getSetting('theme_mode') || 'auto'
-    const language = await dbManager.getSetting('language') || 'zh-CN'
+    const siteName = configManager.getSetting('site_name') || 'MoviCloud'
+    const siteDescription = configManager.getSetting('site_description') || '影视云盘'
+    const themeMode = configManager.getSetting('theme_mode') || 'auto'
+    const language = configManager.getSetting('language') || 'zh-CN'
     
     return {
       success: true,

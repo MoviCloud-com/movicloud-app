@@ -50,12 +50,10 @@ export default defineEventHandler(async (event) => {
       })
     }
     
-    // 从数据库验证当前密码
-    const { DatabaseManager } = await import('../../database/database')
-    const dbManager = new DatabaseManager()
-    await dbManager.initialize()
+    // 从配置文件验证当前密码
+    const { configManager } = await import('../../utils/config-manager')
     
-    const isCurrentPasswordValid = await dbManager.verifyUserPassword(userId, currentPassword)
+    const isCurrentPasswordValid = await configManager.verifyUserPassword(userId, currentPassword)
     if (!isCurrentPasswordValid) {
       throw createError({
         statusCode: 400,
@@ -63,8 +61,8 @@ export default defineEventHandler(async (event) => {
       })
     }
 
-    // 更新数据库中的密码哈希
-    await dbManager.updateUserPassword(userId, newPassword)
+    // 更新配置文件中的密码哈希
+    await configManager.updateUserPassword(userId, newPassword)
     
     return {
       success: true,

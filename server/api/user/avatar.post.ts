@@ -78,12 +78,10 @@ export default defineEventHandler(async (event) => {
       })
     }
     
-    // 更新数据库中的用户头像
-    const { DatabaseManager } = await import('../../database/database')
-    const dbManager = new DatabaseManager()
-    await dbManager.initialize()
+    // 更新配置文件中的用户头像
+    const { configManager } = await import('../../utils/config-manager')
     
-    await dbManager.updateUserAvatar(userId, avatarUrl)
+    configManager.updateUserAvatar(userId, avatarUrl)
 
     return {
       avatar: avatarUrl,

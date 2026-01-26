@@ -140,13 +140,14 @@ const submitTVResource = async (resourceData: {
 }
 
 // 评分资源
-const rateResource = async (resourceId: number, rating: number, comment?: string): Promise<{
+const rateResource = async (resourceId: number, rating: number, type: 'movie' | 'tv' = 'movie', comment?: string): Promise<{
   id: number
   rating: number
   ratingCount: number
 }> => {
   const systemId = await getSystemIdFromDatabase()
-  return await request(`/api/movie/${resourceId}/rate`, {
+  const endpoint = type === 'tv' ? `/api/tv/${resourceId}/rate` : `/api/movie/${resourceId}/rate`
+  return await request(endpoint, {
     method: 'POST',
     body: JSON.stringify({
       rating,
@@ -157,7 +158,7 @@ const rateResource = async (resourceId: number, rating: number, comment?: string
 }
 
 // 举报资源
-const reportResource = async (resourceId: number, reason: string, description?: string): Promise<{
+const reportResource = async (resourceId: number, reason: string, type: 'movie' | 'tv' = 'movie', description?: string): Promise<{
   id: number
   resourceId: number
   systemId: string
@@ -168,7 +169,8 @@ const reportResource = async (resourceId: number, reason: string, description?: 
   createdAt: string
 }> => {
   const systemId = await getSystemIdFromDatabase()
-  return await request(`/api/movie/${resourceId}/report`, {
+  const endpoint = type === 'tv' ? `/api/tv/${resourceId}/report` : `/api/movie/${resourceId}/report`
+  return await request(endpoint, {
     method: 'POST',
     body: JSON.stringify({
       reason,

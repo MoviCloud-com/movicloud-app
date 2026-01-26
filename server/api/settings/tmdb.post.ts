@@ -1,4 +1,4 @@
-import { dbManager } from '../../database/database'
+import { configManager } from '../../utils/config-manager'
 import { devError } from '../../utils/dev'
 
 export default defineEventHandler(async (event) => {
@@ -6,9 +6,9 @@ export default defineEventHandler(async (event) => {
     const body = await readBody(event)
     const { apiKey, apiBaseUrl, imageBaseUrl } = body
 
-    if (apiKey !== undefined) await dbManager.setSetting('tmdb_api_key', apiKey)
-    if (apiBaseUrl !== undefined) await dbManager.setSetting('tmdb_api_base_url', apiBaseUrl)
-    if (imageBaseUrl !== undefined) await dbManager.setSetting('tmdb_image_base_url', imageBaseUrl)
+    if (apiKey !== undefined) configManager.setSetting('tmdb_api_key', apiKey)
+    if (apiBaseUrl !== undefined) configManager.setSetting('tmdb_api_base_url', apiBaseUrl)
+    if (imageBaseUrl !== undefined) configManager.setSetting('tmdb_image_base_url', imageBaseUrl)
 
     return { success: true, message: 'tmdb_settings_saved' }
   } catch (error: any) {

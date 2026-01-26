@@ -1,4 +1,4 @@
-import { dbManager } from '../../database/database'
+import { configManager } from '../../utils/config-manager'
 import { devLog, devError } from '../../utils/dev'
 
 export default defineEventHandler(async (event) => {
@@ -8,34 +8,18 @@ export default defineEventHandler(async (event) => {
       throw createError({ statusCode: 403, statusMessage: 'forbidden_admin_only' })
     }
 
-    devLog('开始备份数据库...')
+    devLog('开始备份配置...')
     
-    // 获取数据库实例
-    if (!dbManager['db']) {
-      await dbManager['initialize']()
-    }
-    const db = dbManager['db']!
-    
-    // 导出所有表的数据
+    // 导出所有配置数据
     const backup: any = {
-      version: '1.0.0',
+      version: '1.0.2',
       timestamp: new Date().toISOString(),
-      tables: {}
+      config: configManager.getAll(),
+      settings: configManager.getAllSettings(),
+      users: configManager.getAllUsers()
     }
     
-    // 导出 users 表
-    const users = await db.all('SELECT * FROM users')
-    backup.tables.users = users
-    
-    // 导出 settings 表
-    const settings = await db.all('SELECT * FROM settings')
-    backup.tables.settings = settings
-    
-    // 导出 installation 表
-    const installation = await db.all('SELECT * FROM installation')
-    backup.tables.installation = installation
-    
-    devLog('数据库备份完成')
+    devLog('配置备份完成')
     
     // 设置响应头，返回JSON文件
     setHeader(event, 'Content-Type', 'application/json; charset=utf-8')

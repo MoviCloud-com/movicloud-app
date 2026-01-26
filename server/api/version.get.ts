@@ -1,7 +1,7 @@
 import { defineEventHandler } from 'h3'
-import { readFileSync } from 'fs'
+import { readFileSync, existsSync } from 'fs'
 import { join } from 'path'
-import { devLog, devError } from '../../server/utils/dev'
+import { devLog, devError } from '../utils/dev'
 
 interface GitHubRelease {
   tag_name: string
@@ -12,23 +12,57 @@ interface GitHubRelease {
 }
 
 export default defineEventHandler(async (event) => {
+  let currentVersion = '1.0.2'
+  let latestVersion = '1.0.2'
+  let latestRelease: GitHubRelease | null = null
+  let updateAvailable = false
+
   try {
-    // 读取当前版本号
-    const packageJsonPath = join(process.cwd(), 'package.json')
-    const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf-8'))
-    const currentVersion = packageJson.version || '1.0.0'
+    // 尝试从多个位置读取 package.json
+    const cwd = process.cwd()
+    const possiblePaths = [
+      join(cwd, 'package.json'), // 当前目录
+      join(cwd, '..', 'package.json'), // 上级目录（编译后的情况）
+      join(cwd, '../..', 'package.json') // 再上一级
+    ]
+
+    let packageJson: any = null
+    for (const packageJsonPath of possiblePaths) {
+      try {
+        if (existsSync(packageJsonPath)) {
+          packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf-8'))
+          currentVersion = packageJson.version || '1.0.2'
+          devLog('从以下路径读取版本:', packageJsonPath, currentVersion)
+          break
+        }
+      } catch (e) {
+        // 继续尝试下一个路径
+        continue
+      }
+    }
+
+    // 如果还是找不到，尝试从配置文件读取
+    if (!packageJson) {
+      try {
+        const { configManager } = await import('../utils/config-manager')
+        const appVersion = configManager.get('Application', 'Version', '1.0.2')
+        currentVersion = String(appVersion)
+        devLog('从配置文件读取版本:', currentVersion)
+      } catch (e) {
+        devLog('无法从配置文件读取版本，使用默认值')
+      }
+    }
+
+    latestVersion = currentVersion
 
     // 获取 GitHub releases
-    let latestVersion = currentVersion
-    let latestRelease: GitHubRelease | null = null
-    let updateAvailable = false
-
     try {
       const response = await fetch('https://api.github.com/repos/MoviCloud-com/movicloud-app/releases/latest', {
         headers: {
           'Accept': 'application/vnd.github.v3+json',
           'User-Agent': 'MoviCloud-App'
-        }
+        },
+        signal: AbortSignal.timeout(10000) // 10秒超时
       })
 
       if (response.ok) {
@@ -39,11 +73,12 @@ export default defineEventHandler(async (event) => {
         if (compareVersions(latestVersion, currentVersion) > 0) {
           updateAvailable = true
         }
+        devLog('GitHub releases 获取成功:', latestVersion)
       } else {
         devLog('无法获取 GitHub releases:', response.status, response.statusText)
       }
-    } catch (error) {
-      devError('获取 GitHub releases 失败:', error)
+    } catch (error: any) {
+      devError('获取 GitHub releases 失败:', error.message || error)
       // 如果获取失败，仍然返回当前版本信息
     }
 
@@ -60,12 +95,13 @@ export default defineEventHandler(async (event) => {
         body: latestRelease.body
       } : null
     }
-  } catch (error) {
-    devError('获取版本信息失败:', error)
+  } catch (error: any) {
+    devError('获取版本信息失败:', error.message || error)
+    // 即使出错也返回当前版本信息
     return {
-      success: false,
-      currentVersion: '1.0.0',
-      latestVersion: '1.0.0',
+      success: true,
+      currentVersion,
+      latestVersion,
       updateAvailable: false,
       latestRelease: null
     }

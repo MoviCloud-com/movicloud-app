@@ -56,10 +56,6 @@ services:
       # 可选：时区与 JWT 密钥
       - TZ=Asia/Shanghai
       - JWT_SECRET=your-strong-secret
-      # 可选：网络在受限环境下的代理（仅当需要）
-      # - HTTP_PROXY=http://host.docker.internal:7890
-      # - HTTPS_PROXY=http://host.docker.internal:7890
-      # - NO_PROXY=localhost,127.0.0.1
     volumes:
       - movi_data:/movicloud-app/data
 volumes:
@@ -78,9 +74,8 @@ docker compose up -d
 2. 在向导中完成：
    - TMDB API Key 配置
    - 语言与主题
-   - （如需要）网络代理配置
    - 创建管理员账号
-3. 完成后即可使用，所有设置支持在“设置”页面修改。
+3. 完成后即可使用，所有设置支持在"设置"页面修改。
 
 提示：系统会将常用设置缓存到前端。修改设置后，前端缓存会自动刷新。
 
@@ -89,11 +84,13 @@ docker compose up -d
 ## 三、数据持久化与目录说明
 
 - 应用数据：`/movicloud-app/data`
-  - 数据库：`/movicloud-app/data/movicloud.db`
+  - 配置文件：`/movicloud-app/data/movicloud.conf`（系统设置、用户数据、安装状态）
   - 上传头像：`/movicloud-app/data/uploads/avatars`
 - 日志目录：`/movicloud-app/logs`（如需挂载，可自定义）
 - 生产环境静态访问：`/uploads/avatars/<文件名>`
   - 示例：`http://<你的域名>/uploads/avatars/avatar_1690000000000.png`
+
+> **注意**：从 1.0.2 版本开始，应用使用 `.conf` 配置文件（类似 qBittorrent 的配置格式）替代数据库。所有设置、用户数据和安装状态都存储在 `movicloud.conf` 中。如果您从旧版本升级，系统会在首次启动时自动将旧数据库的数据迁移到新的配置文件中。
 
 使用命名卷或绑定宿主机目录均可，例如：
 ```bash
@@ -124,10 +121,12 @@ docker compose up -d
 ```
 - 回滚到某版本：
 ```bash
-docker run -d ... movicloud/movicloud-app:1.0.1
+docker run -d ... movicloud/movicloud-app:1.0.2
 ```
 
-镜像标签策略（示例）：`latest`、语义化版本（如 `1.0.1`、`1.0`）。
+镜像标签策略（示例）：`latest`、语义化版本（如 `1.0.2`、`1.0.1`、`1.0`）。
+
+> **升级说明**：如果您从 1.0.1 或更早版本升级，系统会在首次启动时自动将旧数据库（`movicloud.db`）的数据迁移到新的配置文件（`movicloud.conf`）。旧的数据库文件会保留但不再使用。
 
 ---
 
@@ -143,7 +142,6 @@ docker run -d ... movicloud/movicloud-app:1.0.1
   - 若使用宿主目录，确保写权限（推荐使用命名卷）
 
 - 问：网络受限地区图片或 TMDB 访问慢？
-  - 在安装向导或“设置”中配置代理；或在容器环境变量中设置 `HTTP_PROXY/HTTPS_PROXY`
   - 应用会缓存 TMDB 图片域名设置，修改设置后前端会刷新缓存
 
 - 问：如何健康检查？
@@ -282,10 +280,6 @@ server {
 - TMDB设置：
   
   ![TMDB设置](screenshots/settings-tmdb.png)
-
-- 系统代理设置：
-  
-  ![系统代理设置](screenshots/settings-proxy.png)
 
 - 系统语言设置：
   

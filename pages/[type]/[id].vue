@@ -693,7 +693,7 @@ const submitRating = async () => {
     
     // 调用API提交评分
     const resourceId = parseInt(ratingDriveName.value)
-    const result = await apiRateResource(resourceId, currentRating.value, ratingComment.value)
+    const result = await apiRateResource(resourceId, currentRating.value, type, ratingComment.value)
     
     // 更新本地资源数据
     const resource = resourceList.value.find(r => r.id === resourceId)
@@ -751,7 +751,7 @@ const submitReport = async () => {
     
     // 调用API提交举报
     const resourceId = parseInt(reportDriveName.value)
-    const result = await apiReportResource(resourceId, reportReason.value, reportComment.value)
+    const result = await apiReportResource(resourceId, reportReason.value, type, reportComment.value)
     
     // 提交成功后关闭模态框
     showReportModal.value = false

@@ -1,4 +1,4 @@
-import { dbManager } from '../../database/database'
+import { configManager } from '../../utils/config-manager'
 import { devError } from '../../utils/dev'
 
 export default defineEventHandler(async (event) => {
@@ -10,7 +10,7 @@ export default defineEventHandler(async (event) => {
       return { success: false, message: 'language_param_required' }
     }
 
-    await dbManager.setSetting('language', language)
+    configManager.setSetting('language', language)
 
     return { success: true, message: 'save_language_success' }
   } catch (error: any) {

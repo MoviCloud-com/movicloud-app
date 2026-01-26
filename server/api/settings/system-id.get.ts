@@ -1,9 +1,9 @@
-import { dbManager } from '../../database/database'
+import { configManager } from '../../utils/config-manager'
 import { devLog, devWarn, devError } from '../../utils/dev'
 
 export default defineEventHandler(async (event) => {
   try {
-    const systemId = await dbManager.getSetting('system_id')
+    const systemId = configManager.getSetting('system_id')
     
     if (!systemId) {
       devWarn('system_id_not_found')

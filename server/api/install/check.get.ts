@@ -1,9 +1,9 @@
-import { dbManager } from '../../database/database'
+import { configManager } from '../../utils/config-manager'
 import { devError } from '../../utils/dev'
 
 export default defineEventHandler(async (event) => {
   try {
-    const isInstalled = await dbManager.isInstalled()
+    const isInstalled = configManager.isInstalled()
     
     return { success: true, isInstalled, message: isInstalled ? 'already_installed' : 'not_installed' }
   } catch (error) {

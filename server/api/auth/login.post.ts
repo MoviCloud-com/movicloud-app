@@ -1,4 +1,4 @@
-import { dbManager } from '../../database/database'
+import { configManager } from '../../utils/config-manager'
 import jwt from 'jsonwebtoken'
 import { devError } from '../../utils/dev'
 
@@ -13,12 +13,12 @@ export default defineEventHandler(async (event) => {
       return { success: false, message: 'all_fields_required' }
     }
 
-    const isValid = await dbManager.verifyUser(username, password)
+    const isValid = await configManager.verifyUser(username, password)
     if (!isValid) {
       return { success: false, message: 'invalid_credentials' }
     }
 
-    const user = await dbManager.getUser(username)
+    const user = configManager.getUser(username)
     if (!user) {
       return { success: false, message: 'account_not_found' }
     }

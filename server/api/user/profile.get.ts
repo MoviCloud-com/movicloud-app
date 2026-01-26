@@ -1,4 +1,4 @@
-import { DatabaseManager } from '../../database/database'
+import { configManager } from '../../utils/config-manager'
 import jwt from 'jsonwebtoken'
 
 export default defineEventHandler(async (event) => {
@@ -26,11 +26,8 @@ export default defineEventHandler(async (event) => {
       })
     }
     
-    // 从数据库获取用户信息
-    const dbManager = new DatabaseManager()
-    await dbManager.initialize()
-    
-    const user = await dbManager.getUserById(userId)
+    // 从配置文件获取用户信息
+    const user = configManager.getUserById(userId)
     if (!user) {
       throw createError({
         statusCode: 404,

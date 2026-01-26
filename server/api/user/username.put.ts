@@ -1,4 +1,4 @@
-import { DatabaseManager } from '../../database/database'
+import { configManager } from '../../utils/config-manager'
 import jwt from 'jsonwebtoken'
 
 export default defineEventHandler(async (event) => {
@@ -51,10 +51,7 @@ export default defineEventHandler(async (event) => {
     }
 
     // 检查用户名是否已存在
-    const dbManager = new DatabaseManager()
-    await dbManager.initialize()
-    
-    const existingUser = await dbManager.getUser(username.trim())
+    const existingUser = configManager.getUser(username.trim())
     if (existingUser && existingUser.id !== userId) {
       throw createError({
         statusCode: 400,
@@ -62,8 +59,8 @@ export default defineEventHandler(async (event) => {
       })
     }
 
-    // 更新数据库中的用户名
-    await dbManager.updateUserUsername(userId, username.trim())
+    // 更新配置文件中的用户名
+    configManager.updateUserUsername(userId, username.trim())
     
     return {
       success: true,

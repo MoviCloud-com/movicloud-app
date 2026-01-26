@@ -1,9 +1,9 @@
-import { dbManager } from '../../database/database'
+import { configManager } from '../../utils/config-manager'
 import { devError } from '../../utils/dev'
 
 export default defineEventHandler(async (event) => {
   try {
-    const language = await dbManager.getSetting('language') || 'zh-CN'
+    const language = configManager.getSetting('language') || 'zh-CN'
     
     return { success: true, data: { language } }
   } catch (error: any) {

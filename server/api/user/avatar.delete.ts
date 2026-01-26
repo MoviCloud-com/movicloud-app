@@ -17,12 +17,10 @@ export default defineEventHandler(async (event) => {
       throw createError({ statusCode: 401, statusMessage: 'invalid_token' })
     }
 
-    const { DatabaseManager } = await import('../../database/database')
-    const dbManager = new DatabaseManager()
-    await dbManager.initialize()
+    const { configManager } = await import('../../utils/config-manager')
 
     // 将头像清空（使用空字符串表示无头像）
-    await dbManager.updateUserAvatar(userId, '')
+    configManager.updateUserAvatar(userId, '')
 
     return {
       avatar: '',

@@ -1,4 +1,4 @@
-import { DatabaseManager } from '../../database/database'
+import { configManager } from '../../utils/config-manager'
 import jwt from 'jsonwebtoken'
 
 export default defineEventHandler(async (event) => {
@@ -43,11 +43,8 @@ export default defineEventHandler(async (event) => {
       })
     }
     
-    // 更新数据库中的用户昵称
-    const dbManager = new DatabaseManager()
-    await dbManager.initialize()
-    
-    await dbManager.updateUserNickname(userId, nickname.trim())
+    // 更新配置文件中的用户昵称
+    configManager.updateUserNickname(userId, nickname.trim())
     
     return {
       success: true,

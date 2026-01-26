@@ -15,7 +15,7 @@ RUN npm install --only=production
 FROM base AS builder
 WORKDIR /movicloud-app
 COPY --from=deps /movicloud-app/node_modules ./node_modules
-COPY .
+COPY . .
 
 # 构建应用
 RUN npm run build

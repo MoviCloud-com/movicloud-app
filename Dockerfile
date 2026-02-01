@@ -13,18 +13,16 @@ RUN apk add --no-cache \
     curl
 
 # 复制包管理文件
-COPY package*.json ./
-COPY yarn.lock* ./
-COPY package-lock.json* ./
+COPY package.json yarn.lock ./
 
 # 安装依赖
-RUN npm ci --no-audit --prefer-offline
+RUN yarn install --frozen-lockfile
 
 # 复制源代码
 COPY . .
 
 # 构建应用
-RUN npm run build
+RUN yarn build
 
 # 生产阶段
 FROM node:22-alpine AS runner

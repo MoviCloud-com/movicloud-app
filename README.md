@@ -107,10 +107,6 @@ The following features will be released in future versions:
 - **Direct Transfer**: Share files and transfer them directly to the user's cloud drive.
 - **Enhanced Resource Submission**: Select files from bound cloud drive accounts when submitting resources, automatically generating share links.
 
-### Cloud Drive Events
-- **VIP Events**: Free VIP activation and renewal events.
-- **Storage Expansion**: Free storage expansion events.
-
 ### Social & Community
 - **Reviews**: Share opinions and ratings on movies/TV shows.
 - **Social Feed/Chat**: Interact with other users via social feeds or chat rooms.

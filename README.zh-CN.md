@@ -1,8 +1,8 @@
 [English](README.md) | [简体中文](README.zh-CN.md)
 
-# MoviCloud 影视云盘（Docker 优先安装指南）
+# MoviCloud 影视云盘
 
-MoviCloud 是一款基于 Nuxt 3 的影视聚合与浏览应用，集成 TMDB 数据，支持电影/剧集信息展示、搜索、个人资料、下载入口等功能。本文档聚焦“如何使用”，尤其是 Docker 安装与持久化。
+MoviCloud 是一款基于 Nuxt 3 的影视聚合与浏览应用，集成 TMDB 数据，支持电影/剧集信息展示、搜索、个人资料、下载入口等功能。
 
 ## 亮点
 
@@ -10,26 +10,31 @@ MoviCloud 是一款基于 Nuxt 3 的影视聚合与浏览应用，集成 TMDB �
 - ⚡ 前端图片懒加载与缓存，体验流畅
 - 🌙 深色主题与响应式布局
 - 🧭 安装向导（首启自动引导配置）
-- 🐳 官方 Docker 镜像：`movicloud/movicloud-app`（支持 amd64/arm64）
+- � 支持飞牛 (fnOS)、群晖 (Synology) 及 Docker 安装
 
 ---
 
-## 一、快速开始
+## 一、安装指南
 
-### 方式 A：飞牛OS 商店安装（推荐飞牛OS用户使用）
+我们推荐您在 NAS 设备上安装 MoviCloud 以获得最佳体验。
+
+### 1. 飞牛 (fnOS) 安装（推荐）
+
+您可以通过以下两种方式在飞牛 NAS 上安装 MoviCloud：
+
+*   **应用商店安装**：打开飞牛应用商店，搜索 "MoviCloud" 直接安装。
+*   **手动安装**：前往 [GitHub Releases](https://github.com/MoviCloud-com/movicloud-app/releases) 页面下载最新版本的 `.fpk` 安装包，然后在飞牛系统中手动上传安装。
 
 ![飞牛OS](screenshots/fnnas.png)
 
-如果您使用的是飞牛OS系统，可以前往 [GitHub Releases](https://github.com/MoviCloud-com/movicloud-app/releases) 页面下载适配飞牛商店的安装包。
+### 2. 群晖 (Synology) 安装（推荐）
 
-### 方式 B：Docker 安装
+前往 [GitHub Releases](https://github.com/MoviCloud-com/movicloud-app/releases) 页面下载最新版本的 `.spk` 安装包，然后在群晖套件中心手动上传安装。
 
-#### 1) 拉取镜像
-```bash
-docker pull movicloud/movicloud-app:latest
-```
+### 3. Docker 安装
 
-#### 2) 一键运行（最简）
+如果您熟悉 Docker，也可以使用以下命令快速启动：
+
 ```bash
 docker run -d \
   --name movicloud \
@@ -38,39 +43,15 @@ docker run -d \
   -e NODE_ENV=production \
   movicloud/movicloud-app:latest
 ```
-- 访问地址：`http://<你的IP或域名>:15078`
-- 首次进入会自动跳转安装向导（`/install`）
-- 数据（数据库、上传头像等）持久化在容器路径：`/movicloud-app/data`
 
-#### 3) 推荐：Docker Compose
-```yaml
-services:
-  movicloud:
-    image: movicloud/movicloud-app:latest
-    container_name: movicloud
-    restart: unless-stopped
-    ports:
-      - "15078:15078"
-    environment:
-      - NODE_ENV=production
-      # 可选：时区与 JWT 密钥
-      - TZ=Asia/Shanghai
-      - JWT_SECRET=your-strong-secret
-    volumes:
-      - movi_data:/movicloud-app/data
-volumes:
-  movi_data:
-```
-启动：
-```bash
-docker compose up -d
-```
+*   访问地址：`http://<你的IP或域名>:15078`
+*   数据持久化：`/movicloud-app/data`
 
 ---
 
 ## 二、首次安装向导
 
-1. 访问 `http://<你的IP或域名>:15078/install`
+1. 访问应用地址（默认端口 15078）
 2. 在向导中完成：
    - TMDB API Key 配置
    - 语言与主题
@@ -83,63 +64,31 @@ docker compose up -d
 
 ## 三、数据持久化与目录说明
 
+无论您使用哪种安装方式，应用数据都存储在以下位置：
+
 - 应用数据：`/movicloud-app/data`
   - 配置文件：`/movicloud-app/data/movicloud.conf`（系统设置、用户数据、安装状态）
   - 上传头像：`/movicloud-app/data/uploads/avatars`
-- 日志目录：`/movicloud-app/logs`（如需挂载，可自定义）
-- 生产环境静态访问：`/uploads/avatars/<文件名>`
-  - 示例：`http://<你的域名>/uploads/avatars/avatar_1690000000000.png`
+- 日志目录：`/movicloud-app/logs`
 
-> **注意**：从 1.0.2 版本开始，应用使用 `.conf` 配置文件（类似 qBittorrent 的配置格式）替代数据库。所有设置、用户数据和安装状态都存储在 `movicloud.conf` 中。如果您从旧版本升级，系统会在首次启动时自动将旧数据库的数据迁移到新的配置文件中。
-
-使用命名卷或绑定宿主机目录均可，例如：
-```bash
-docker run -d \
-  --name movicloud \
-  -p 15078:15078 \
-  -v /your/host/path/data:/movicloud-app/data \
-  movicloud/movicloud-app:latest
-```
-
-> 若使用宿主目录，请确保宿主目录对容器内运行用户（默认 `node`）可写。
+> **注意**：从 1.0.2 版本开始，应用使用 `.conf` 配置文件（类似 qBittorrent 的配置格式）替代数据库。所有设置、用户数据和安装状态都存储在 `movicloud.conf` 中。
 
 ---
 
 ## 四、升级与回滚
 
-- 升级至最新：
-```bash
-docker pull movicloud/movicloud-app:latest
-# 若使用 run 方式：先停止并删除旧容器，再以相同卷参数启动
-docker stop movicloud && docker rm movicloud
-# 重新运行（保持同样的 -v 卷映射）
-```
-- Docker Compose：
-```bash
-docker compose pull
-docker compose up -d
-```
-- 回滚到某版本：
-```bash
-docker run -d ... movicloud/movicloud-app:1.0.2
-```
+- **NAS 用户**：在应用商店更新或下载新版安装包覆盖安装。
+- **Docker 用户**：拉取新镜像并重建容器。
 
-镜像标签策略（示例）：`latest`、语义化版本（如 `1.0.2`、`1.0.1`、`1.0`）。
-
-> **升级说明**：如果您从 1.0.1 或更早版本升级，系统会在首次启动时自动将旧数据库（`movicloud.db`）的数据迁移到新的配置文件（`movicloud.conf`）。旧的数据库文件会保留但不再使用。
+> **升级说明**：如果您从 1.0.1 或更早版本升级，系统会在首次启动时自动将旧数据库（`movicloud.db`）的数据迁移到新的配置文件（`movicloud.conf`）。
 
 ---
 
 ## 五、常见问题（FAQ）
 
 - 问：访问不到页面？
-  - 检查端口映射是否为 `-p 15078:15078`
-  - 若有反向代理，确认转发到容器端口 `15078`
-
-- 问：在 Docker 中头像不保存或访问不到？
-  - 确认已挂载 `data` 卷：`/movicloud-app/data`
-  - 访问路径应形如：`/uploads/avatars/<文件名>`
-  - 若使用宿主目录，确保写权限（推荐使用命名卷）
+  - 检查端口映射是否正确（默认 15078）
+  - 若有反向代理，确认转发配置正确
 
 - 问：网络受限地区图片或 TMDB 访问慢？
   - 应用会缓存 TMDB 图片域名设置，修改设置后前端会刷新缓存
@@ -147,37 +96,9 @@ docker run -d ... movicloud/movicloud-app:1.0.2
 - 问：如何健康检查？
   - 健康检查接口：`/api/health`（返回 200 表示正常）
 
-- 问：如何自定义安全与时区？
-  - 设置环境变量 `JWT_SECRET` 与 `TZ`
-
 ---
 
-## 六、反向代理（可选）
-
-以 Nginx 为例：
-```nginx
-server {
-  listen 80;
-  server_name your.domain.com;
-
-  location / {
-    proxy_pass http://127.0.0.1:15078;
-    proxy_set_header Host $host;
-    proxy_set_header X-Real-IP $remote_addr;
-    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-    proxy_set_header X-Forwarded-Proto $scheme;
-  }
-
-  # 上传文件静态访问（可选，应用已内置处理 /uploads/ 路由）
-  location /uploads/ {
-    proxy_pass http://127.0.0.1:15078;
-  }
-}
-```
-
----
-
-## 七、开发计划
+## 六、开发计划
 
 以下功能将在后续版本中陆续上线：
 
@@ -199,7 +120,7 @@ server {
 
 ---
 
-## 八、页面截图
+## 七、页面截图
 
 - 安装欢迎：
 

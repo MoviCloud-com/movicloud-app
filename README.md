@@ -1,35 +1,40 @@
 [English](README.md) | [简体中文](README.zh-CN.md)
 
-# MoviCloud Media Cloud (Docker-first Guide)
+# MoviCloud Media Hub
 
-MoviCloud is a Nuxt 3-based media hub that aggregates TMDB data for movies and TV. This guide focuses on how to use the app, especially installing and running with Docker.
+MoviCloud is a Nuxt 3-based media hub that aggregates TMDB data for movies and TV shows, featuring details display, search, user profiles, and download integration.
 
 ## Highlights
 
-- Movies/TV details, cast, recommendations
-- Smooth UX with image lazy loading and caching
-- Dark theme and responsive layout
-- First-run installation wizard
-- Official Docker image: `movicloud/movicloud-app` (amd64/arm64)
+- 🎬 Movies/TV details, cast, recommendations
+- ⚡ Smooth UX with image lazy loading and caching
+- 🌙 Dark theme and responsive layout
+- 🧭 Installation wizard for easy setup
+- 📦 Supports fnOS, Synology, and Docker installation
 
 ---
 
-## 1. Quick Start
+## I. Installation Guide
 
-### Option A: FNNAS App Store (Recommended for FNNAS users)
+We recommend installing MoviCloud on your NAS device for the best experience.
+
+### 1. fnOS Installation (Recommended)
+
+You can install MoviCloud on fnOS using one of the following methods:
+
+*   **App Store**: Open the fnOS App Store, search for "MoviCloud", and install it directly.
+*   **Manual Installation**: Download the latest `.fpk` package from the [GitHub Releases](https://github.com/MoviCloud-com/movicloud-app/releases) page and manually upload it to your fnOS system.
 
 ![FNNAS](screenshots/fnnas.png)
 
-If you're using FNNAS, you can download the pre-configured installation package from our [GitHub Releases](https://github.com/MoviCloud-com/movicloud-app/releases) page. The package is specifically adapted for FNNAS App Store installation.
+### 2. Synology Installation (Recommended)
 
-### Option B: Docker Installation
+Download the latest `.spk` package from the [GitHub Releases](https://github.com/MoviCloud-com/movicloud-app/releases) page and manually upload it to the Synology Package Center.
 
-#### 1) Pull the image
-```bash
-docker pull movicloud/movicloud-app:latest
-```
+### 3. Docker Installation
 
-#### 2) Run (simple)
+If you are familiar with Docker, you can use the following command to start quickly:
+
 ```bash
 docker run -d \
   --name movicloud \
@@ -38,192 +43,110 @@ docker run -d \
   -e NODE_ENV=production \
   movicloud/movicloud-app:latest
 ```
-- URL: `http://<your-host>:15078`
-- The first visit will redirect to the installation wizard (`/install`)
-- Data (DB, uploads) are persisted at `/movicloud-app/data`
 
-#### 3) Recommended: Docker Compose
-```yaml
-services:
-  movicloud:
-    image: movicloud/movicloud-app:latest
-    container_name: movicloud
-    restart: unless-stopped
-    ports:
-      - "15078:15078"
-    environment:
-      - NODE_ENV=production
-      # Optional: timezone & JWT secret
-      - TZ=Asia/Shanghai
-      - JWT_SECRET=your-strong-secret
-    volumes:
-      - movi_data:/movicloud-app/data
-volumes:
-  movi_data:
-```
-Start:
-```bash
-docker compose up -d
-```
+*   URL: `http://<your-host>:15078`
+*   Data Persistence: `/movicloud-app/data`
 
 ---
 
-## 2. First-time Installation Wizard
+## II. First-time Installation Wizard
 
-1. Visit `http://<your-host>:15078/install`
+1. Visit the application URL (default port 15078).
 2. Configure in the wizard:
    - TMDB API Key
    - Language and Theme
    - Admin account creation
-3. You can change all settings later on the Settings page.
+3. Once completed, you can change all settings on the Settings page.
 
-Note: frequently used settings are cached on the client; caches refresh after changes.
+Note: Frequently used settings are cached on the client; caches refresh automatically after changes.
 
 ---
 
-## 3. Persistence and Paths
+## III. Data Persistence and Paths
 
-- App data: `/movicloud-app/data`
+Regardless of the installation method, application data is stored in the following locations:
+
+- App Data: `/movicloud-app/data`
   - Configuration: `/movicloud-app/data/movicloud.conf` (settings, users, installation status)
   - Avatars: `/movicloud-app/data/uploads/avatars`
-- Logs: `/movicloud-app/logs` (optional mount)
-- In production, uploaded files are served under: `/uploads/avatars/<filename>`
-  - Example: `http://<your-domain>/uploads/avatars/avatar_1690000000000.png`
+- Logs: `/movicloud-app/logs`
 
-> **Note**: Starting from version 1.0.2, the application uses a `.conf` file (similar to qBittorrent's configuration format) instead of a database. All settings, user data, and installation status are stored in `movicloud.conf`. If you're upgrading from an older version, the system will automatically migrate data from the old database to the new configuration file.
-
-Use either named volumes or bind mounts, e.g.:
-```bash
-docker run -d \
-  --name movicloud \
-  -p 15078:15078 \
-  -v /your/host/path/data:/movicloud-app/data \
-  movicloud/movicloud-app:latest
-```
-
-> If using a host directory, ensure it is writable by the container user (default `node`).
+> **Note**: Starting from version 1.0.2, the application uses a `.conf` file (similar to qBittorrent's configuration format) instead of a database. All settings, user data, and installation status are stored in `movicloud.conf`.
 
 ---
 
-## 4. Upgrade & Rollback
+## IV. Upgrade and Rollback
 
-- Upgrade to latest:
-```bash
-docker pull movicloud/movicloud-app:latest
-# If using `docker run`: stop and remove the old container, then start again with the same volume mappings
-```
-- Docker Compose:
-```bash
-docker compose pull
-docker compose up -d
-```
-- Roll back to a specific version:
-```bash
-docker run -d ... movicloud/movicloud-app:1.0.2
-```
+- **NAS Users**: Update via the App Store or download the new installation package to overwrite.
+- **Docker Users**: Pull the new image and recreate the container.
 
-Image tags: `latest` and semantic versions like `1.0.2`, `1.0.1`, `1.0`.
-
-> **Upgrade Note**: If upgrading from version 1.0.1 or earlier, the system will automatically migrate data from the old database (`movicloud.db`) to the new configuration file (`movicloud.conf`) on first startup. The old database file will remain but is no longer used.
+> **Upgrade Note**: If you are upgrading from version 1.0.1 or earlier, the system will automatically migrate data from the old database (`movicloud.db`) to the new configuration file (`movicloud.conf`) on the first startup.
 
 ---
 
-## 5. FAQ
+## V. FAQ
 
-- Q: Cannot access the app?
-  - Check port mapping `-p 15078:15078`
-  - If behind a reverse proxy, ensure it forwards to container port `15078`
+- Q: Cannot access the page?
+  - Check if the port mapping is correct (default 15078).
+  - If using a reverse proxy, ensure the forwarding configuration is correct.
 
-- Q: Avatars not persisted or 404 in Docker?
-  - Ensure the `data` volume is mounted: `/movicloud-app/data`
-  - Access path should look like `/uploads/avatars/<filename>`
-  - If using a host directory, ensure write permission (named volume recommended)
+- Q: Slow image loading or TMDB access in restricted network regions?
+  - The app caches TMDB image domain settings; caches refresh after modifying settings.
 
-- Q: Slow image/TMDB access in restricted networks?
-  - TMDB image base URL is cached; caches refresh after changes
-
-- Q: Health check?
-  - Endpoint: `/api/health` (200 OK means healthy)
-
-- Q: Security & timezone?
-  - Set `JWT_SECRET` and `TZ`
+- Q: How to check health?
+  - Health check endpoint: `/api/health` (returns 200 for normal).
 
 ---
 
-## 6. Reverse Proxy (optional)
+## VI. Roadmap
 
-Nginx example:
-```nginx
-server {
-  listen 80;
-  server_name your.domain.com;
-
-  location / {
-    proxy_pass http://127.0.0.1:15078;
-    proxy_set_header Host $host;
-    proxy_set_header X-Real-IP $remote_addr;
-    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-    proxy_set_header X-Forwarded-Proto $scheme;
-  }
-
-  # Optional: uploads (app already serves /uploads/)
-  location /uploads/ {
-    proxy_pass http://127.0.0.1:15078;
-  }
-}
-```
-
----
-
-## 7. Development Roadmap
-
-The following features are planned for future releases:
+The following features will be released in future versions:
 
 ### Cloud Drive Integration
-- **Cloud Drive SDK Integration**: Integrate cloud drive SDKs to enable users to add cloud drive accounts. For security, all account information and authorization credentials will be stored locally and never uploaded to the cloud.
-- **Direct File Transfer**: Share files directly to users' cloud drives for convenient access.
-- **Resource Submission Enhancement**: When users submit media resources, a popup will allow them to select files from their bound cloud drive accounts, automatically generating share links.
+- **SDK Integration**: Integrate cloud drive SDKs to add cloud drive accounts. For security, all account and authorization info will be stored locally and not uploaded to the cloud.
+- **Direct Transfer**: Share files and transfer them directly to the user's cloud drive.
+- **Enhanced Resource Submission**: Select files from bound cloud drive accounts when submitting resources, automatically generating share links.
 
-### Cloud Drive Activities
-- **VIP Activation Campaigns**: Gradually launch free cloud drive VIP activation and renewal campaigns.
-- **Storage Expansion Campaigns**: Gradually launch free cloud drive storage expansion campaigns.
+### Cloud Drive Events
+- **VIP Events**: Free VIP activation and renewal events.
+- **Storage Expansion**: Free storage expansion events.
 
-### Social & Community Features
-- **Movie Reviews**: Add movie review functionality, allowing users to share their thoughts and ratings.
-- **Social Feed & Chat**: Add social feed or chat room functionality for user interaction and communication.
+### Social & Community
+- **Reviews**: Share opinions and ratings on movies/TV shows.
+- **Social Feed/Chat**: Interact with other users via social feeds or chat rooms.
 
 ### AI Features
-- **AI Search**: Add AI-powered search functionality. Users will need to provide their own large language model API keys to use this feature.
+- **AI Search**: AI-powered search (requires user's own LLM API key).
 
 ---
 
-## 8. Screenshots
+## VII. Screenshots
 
 - Installation Welcome:
 
   ![Installation Welcome](screenshots/install-welcome.png)
 
-- TMDB Settings (Install):
+- TMDB Setup:
 
-  ![TMDB Settings (Install)](screenshots/install-tmdb.png)
+  ![TMDB Setup](screenshots/install-tmdb.png)
 
-- User Setup (Install):
+- User Setup:
 
-  ![User Setup (Install)](screenshots/install-user.png)
+  ![User Setup](screenshots/install-user.png)
 
-- Install Confirmation:
+- Confirmation:
 
-  ![Install Confirmation](screenshots/install-confirm.png)
+  ![Confirmation](screenshots/install-confirm.png)
 
 - Installation Success:
 
   ![Installation Success](screenshots/install-success.png)
 
-- User Login:
+- Login:
 
-  ![User Login](screenshots/login.png)
+  ![Login](screenshots/login.png)
 
-- Home Carousel & Recommendations:
+- Home & Recommendations:
   
   ![Home](screenshots/home.png)
 
@@ -235,55 +158,54 @@ The following features are planned for future releases:
 
   ![Movie Details](screenshots/movie-detail.png)
 
-- Movie Download Dialog:
+- Movie Download:
 
-  ![Movie Download Dialog](screenshots/movie-download.png)
+  ![Movie Download](screenshots/movie-download.png)
 
-- Movie Share Dialog:
+- Movie Resource Sharing:
 
-  ![Movie Share Dialog](screenshots/movie-post.png)
+  ![Movie Resource Sharing](screenshots/movie-post.png)
 
-- TV Library:
+- TV Show Library:
 
-  ![TV Library](screenshots/tv-library.png)
+  ![TV Show Library](screenshots/tv-library.png)
 
-- TV Details:
+- TV Show Details:
 
-  ![TV Details](screenshots/tv-detail.png)
+  ![TV Show Details](screenshots/tv-detail.png)
 
-- TV Download Dialog:
+- TV Show Download:
 
-  ![TV Download Dialog](screenshots/tv-download.png)
+  ![TV Show Download](screenshots/tv-download.png)
 
-- TV Share Dialog:
+- TV Show Resource Sharing:
 
-  ![TV Share Dialog](screenshots/tv-post.png)
+  ![TV Show Resource Sharing](screenshots/tv-post.png)
 
-- TV Season Details Dialog:
+- TV Show Season Details:
 
-  ![TV Season Details Dialog](screenshots/tv-season.png)
+  ![TV Show Season Details](screenshots/tv-season.png)
 
-- Person Details:
+- Cast Details:
   
-  ![Person Details](screenshots/person-detail.png)
+  ![Cast Details](screenshots/person-detail.png)
 
-- Search Dialog:
+- Search:
   
-  ![Search Dialog](screenshots/search.png)
+  ![Search](screenshots/search.png)
 
-- Theme & Fonts Settings:
+- Theme & Font Settings:
   
-  ![Theme & Fonts Settings](screenshots/settings-theme.png)
+  ![Theme & Font Settings](screenshots/settings-theme.png)
 
-- TMDB Settings (Settings Page):
+- TMDB Settings:
   
   ![TMDB Settings](screenshots/settings-tmdb.png)
-
 
 - Language Settings:
   
   ![Language Settings](screenshots/settings-language.png)
 
-- Profile:
+- Profile Settings:
   
-  ![Profile](screenshots/profile.png)
+  ![Profile Settings](screenshots/profile.png)

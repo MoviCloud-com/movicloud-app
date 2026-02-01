@@ -10,7 +10,7 @@ MoviCloud 是一款基于 Nuxt 3 的影视聚合与浏览应用，集成 TMDB �
 - ⚡ 前端图片懒加载与缓存，体验流畅
 - 🌙 深色主题与响应式布局
 - 🧭 安装向导（首启自动引导配置）
-- � 支持飞牛 (fnOS)、群晖 (Synology) 及 Docker 安装
+- 📦 支持飞牛 (fnOS)、群晖 (Synology) 及 Docker 安装
 
 ---
 

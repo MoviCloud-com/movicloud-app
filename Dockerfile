@@ -1,55 +1,24 @@
 # 使用官方Node.js运行时作为基础镜像
-FROM node:18-alpine AS base
+FROM node:18-alpine
 
 # 安装依赖
-FROM base AS deps
-# 检查 https://github.com/nodejs/docker-node/tree/b4117f9333da4138b03a546ec926ef50a31506c3#nodealpine 了解为什么需要 libc6-compat
 RUN apk add --no-cache libc6-compat
 WORKDIR /movicloud-app
 
-# 安装依赖
-COPY package.json ./
-RUN npm install --only=production
-
-# 重新构建源码
-FROM base AS builder
-WORKDIR /movicloud-app
-COPY --from=deps /movicloud-app/node_modules ./node_modules
+# 复制应用文件
+COPY package*.json ./
 COPY . .
 
-# 构建应用
-RUN npm run build
+# 安装依赖（包括开发依赖）
+RUN npm install
 
-# 生产镜像，复制所有文件并运行Nuxt应用
-FROM base AS runner
-WORKDIR /movicloud-app
-
-
-# 复制构建输出
-COPY --from=builder /movicloud-app/.output ./movicloud
-
-# 复制public目录
-COPY --from=builder /movicloud-app/public ./movicloud/public
-
-# 进入 movicloud 目录
-WORKDIR /movicloud-app/movicloud
-
-ENV NODE_ENV=production
-
-# 创建必要的目录
-RUN mkdir -p data logs data/uploads/avatars
-
-# 设置正确的权限
-RUN chown -R node:node .
-RUN chmod 755 data logs
-RUN chmod -R 755 data/uploads
-
-USER node
-
-EXPOSE 15078
-
+# 设置环境变量
+ENV NODE_ENV=development
 ENV PORT=15078
 ENV HOSTNAME="0.0.0.0"
 
-# 启动应用
-CMD ["node", "server/index.mjs"] 
+# 暴露端口
+EXPOSE 15078
+
+# 以开发模式运行
+CMD ["npm", "run", "dev"]

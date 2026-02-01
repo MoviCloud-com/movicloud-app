@@ -26,6 +26,10 @@ logs
 # Documentation (exclude from git)
 docs/
 
+# 架构相关
+x86_64/
+arm/
+
 # 配置文件
 data/movicloud.conf
 data/movicloud.db

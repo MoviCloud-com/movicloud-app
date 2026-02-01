@@ -83,12 +83,31 @@
                   {{ t('pending') }}
                 </span>
                 <span
+                  v-else-if="application.status === 'submitted'"
+                  class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 border border-blue-200 dark:border-blue-800"
+                >
+                  <i class="pi pi-send text-xs"></i>
+                  {{ t('submitted') }}
+                </span>
+                <span
                   v-else-if="application.status === 'approved'"
                   class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 border border-green-200 dark:border-green-800"
                 >
                   <i class="pi pi-check-circle text-xs"></i>
                   {{ t('approved') }}
                 </span>
+                
+                <!-- 数据查询按钮 -->
+                <button
+                  v-if="application.status === 'approved'"
+                  @click="openSummaryDialog(application, $event)"
+                  class="ml-2 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-primary-100 dark:bg-primary-900/30 text-primary-800 dark:text-primary-300 border border-primary-200 dark:border-primary-800 hover:bg-primary-200 dark:hover:bg-primary-800/40 transition-colors"
+                  :title="t('view_summary')"
+                >
+                  <i class="pi pi-chart-bar text-xs"></i>
+                  {{ t('data_summary') }}
+                </button>
+
                 <span
                   v-else-if="application.status === 'rejected'"
                   class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300 border border-red-200 dark:border-red-800"
@@ -165,6 +184,13 @@
           >
             <i class="pi pi-clock text-xs"></i>
             {{ t('pending') }}
+          </span>
+          <span
+            v-else-if="selectedApplication.status === 'submitted'"
+            class="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 border border-blue-200 dark:border-blue-800"
+          >
+            <i class="pi pi-send text-xs"></i>
+            {{ t('submitted') }}
           </span>
           <span
             v-else-if="selectedApplication.status === 'approved'"
@@ -253,6 +279,40 @@
       </div>
     </Dialog>
 
+    <!-- 推广数据汇总弹窗 -->
+    <Dialog
+      v-model:visible="showSummaryDialog"
+      :modal="true"
+      :header="selectedApplication ? `${selectedApplication.project.name} - ${t('data_summary')}` : ''"
+      :style="{ width: '90vw', maxWidth: '500px' }"
+      class="summary-dialog"
+    >
+      <div v-if="isSummaryLoading" class="flex justify-center items-center py-10">
+        <i class="pi pi-spin pi-spinner text-3xl text-primary"></i>
+      </div>
+      <div v-else-if="summaryData" class="space-y-6">
+        <div class="text-center pb-4 border-b border-surface-200 dark:border-surface-700">
+          <p class="text-sm text-surface-500 dark:text-surface-400 mb-1">{{ t('statistics_period') }}</p>
+          <p class="text-lg font-semibold text-surface-900 dark:text-surface-0">{{ summaryData.date }}</p>
+        </div>
+        
+        <div class="grid grid-cols-2 gap-4">
+          <div class="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-xl text-center border border-blue-100 dark:border-blue-800">
+            <p class="text-sm text-blue-600 dark:text-blue-300 mb-2">{{ t('new_users') }}</p>
+            <p class="text-2xl font-bold text-blue-700 dark:text-blue-200">{{ summaryData.new_total }}</p>
+          </div>
+          
+          <div class="bg-purple-50 dark:bg-purple-900/20 p-4 rounded-xl text-center border border-purple-100 dark:border-purple-800">
+            <p class="text-sm text-purple-600 dark:text-purple-300 mb-2">{{ t('transfers') }}</p>
+            <p class="text-2xl font-bold text-purple-700 dark:text-purple-200">{{ summaryData.transfer_total }}</p>
+          </div>
+        </div>
+      </div>
+      <div v-else class="text-center py-10">
+        <p class="text-surface-500">{{ t('no_data_available') }}</p>
+      </div>
+    </Dialog>
+
     <!-- 图片预览弹窗 -->
     <Dialog
       v-model:visible="showImagePreview"
@@ -286,12 +346,33 @@ const {
   myApplications, 
   loading, 
   error, 
-  fetchMyApplications 
+  fetchMyApplications,
+  summaryData,
+  fetchSummary
 } = useNetdiskApplications()
 
 // 弹窗状态
 const showDetailDialog = ref(false)
 const selectedApplication = ref<any>(null)
+
+// 推广数据汇总弹窗
+const showSummaryDialog = ref(false)
+const isSummaryLoading = ref(false)
+
+const openSummaryDialog = async (application: any, event: Event) => {
+  event.stopPropagation()
+  selectedApplication.value = application
+  showSummaryDialog.value = true
+  isSummaryLoading.value = true
+  
+  try {
+    await fetchSummary(application.id)
+  } catch (e) {
+    // 错误已由 useNetdiskApplications 处理
+  } finally {
+    isSummaryLoading.value = false
+  }
+}
 
 const formatDate = (dateString: string) => {
   const date = new Date(dateString)

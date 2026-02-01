@@ -12,7 +12,7 @@ export default defineEventHandler(async (event) => {
     
     // 导出所有配置数据
     const backup: any = {
-      version: '1.0.2',
+      version: '1.0.3',
       timestamp: new Date().toISOString(),
       config: configManager.getAll(),
       settings: configManager.getAllSettings(),

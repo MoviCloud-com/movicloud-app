@@ -448,5 +448,34 @@ export const common = {
   'remove_image': 'Remove Image',
   'review_info': 'Review Information',
   'application_details': 'Application Details',
-  'image_preview': 'Image Preview'
+  'image_preview': 'Image Preview',
+  
+  // Promotion Data
+  'data_summary': 'Data Query',
+  'view_summary': 'View Data Summary',
+  'statistics_period': 'Statistics Period',
+  'new_users': 'New Users',
+  'transfers': 'Transfers',
+  'no_data_available': 'No data available',
+  
+  // Subscriptions and Resources
+  'my_subscriptions': 'My Subscriptions',
+  'my_subscriptions_subtitle': 'View your subscribed movies and TV shows',
+  'my_resources': 'My Resources',
+  'my_resources_subtitle': 'View your published movie and TV resources',
+  'subscribe': 'Subscribe',
+  'unsubscribe': 'Unsubscribe',
+  'subscribed': 'Subscribed',
+  'subscribe_success': 'Subscribed successfully',
+  'unsubscribe_success': 'Unsubscribed successfully',
+  'no_subscriptions': 'You have not subscribed to any content yet',
+  'no_subscriptions_desc': 'Subscribe to movies and TV shows you are interested in to get the latest updates',
+  'go_to_discover': 'Go to Discover',
+  'go_to_share': 'Go to Share',
+  'resource_status': 'Resource Status',
+  'resource_type': 'Resource Type',
+  'release_date': 'Release Date',
+  'published': 'Published',
+  'saved': 'Saved',
+  'operation_failed': 'Operation failed'
 } 

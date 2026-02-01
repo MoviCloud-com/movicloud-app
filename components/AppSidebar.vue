@@ -139,7 +139,7 @@ const setActiveMenu = (menuId: string) => {
     <!-- 导航菜单 -->
     <nav :class="[
       'flex-1',
-      sidebarCollapsed ? 'px-2 py-3' : 'px-3 py-2'
+      sidebarCollapsed ? 'px-4 py-3' : 'px-4 py-2'
     ]">
       <!-- 展开状态：单列布局，图标和文字水平排列 -->
       <ul v-if="!sidebarCollapsed" class="space-y-1">
@@ -148,36 +148,28 @@ const setActiveMenu = (menuId: string) => {
             :to="item.route"
             @click="setActiveMenu(item.id)"
             :class="[
-              'flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group',
-              'border border-transparent',
-              'focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1',
+              'flex items-center gap-3 px-3 py-3 rounded-xl transition-all duration-200 group',
+              'focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2',
               $route.path === item.route
-                ? 'bg-primary text-primary-contrast border-primary shadow-md hover:bg-primary hover:text-primary-contrast'
-                : 'text-surface-700 dark:text-surface-300 hover:bg-surface-100 dark:hover:bg-surface-800 hover:border-surface-200 dark:hover:border-surface-700'
+                ? 'bg-primary text-primary-contrast shadow-md'
+                : 'text-surface-600 dark:text-surface-400 hover:bg-surface-100 dark:hover:bg-surface-800 hover:text-primary'
             ]"
           >
             <!-- 图标 -->
-            <div :class="[
-              'flex items-center justify-center rounded-lg transition-all duration-200 w-8 h-8 flex-shrink-0',
+            <i :class="[
+              item.icon, 
+              'text-xl transition-colors duration-200',
               $route.path === item.route
-                ? 'bg-primary-contrast/20' 
-                : 'bg-surface-100 dark:bg-surface-800 group-hover:bg-surface-200 dark:group-hover:bg-surface-700'
-            ]">
-              <i :class="[
-                item.icon, 
-                'text-base',
-                $route.path === item.route
-                  ? 'text-primary-contrast' 
-                  : 'text-surface-600 dark:text-surface-400 group-hover:text-surface-800 dark:group-hover:text-surface-200'
-              ]" />
-            </div>
+                ? 'text-primary-contrast' 
+                : 'text-surface-500 dark:text-surface-400 group-hover:text-primary'
+            ]" />
             
             <!-- 菜单名称 -->
             <span :class="[
               'font-medium transition-all duration-200 text-sm',
               $route.path === item.route
                 ? 'text-primary-contrast' 
-                : 'text-surface-700 dark:text-surface-300 group-hover:text-surface-900 dark:group-hover:text-surface-100'
+                : ''
             ]">
               {{ item.label }}
             </span>
@@ -192,19 +184,19 @@ const setActiveMenu = (menuId: string) => {
             :to="item.route"
             @click="setActiveMenu(item.id)"
             :class="[
-              'flex items-center justify-center w-11 h-11 rounded-full transition-all duration-300 group relative',
+              'flex items-center justify-center w-12 h-12 rounded-xl transition-all duration-200 group relative',
               'focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2',
               $route.path === item.route
-                ? 'bg-primary text-primary-contrast shadow-lg scale-110 hover:bg-primary hover:text-primary-contrast hover:scale-110'
-                : 'text-surface-600 dark:text-surface-400 hover:bg-surface-100 dark:hover:bg-surface-800 hover:text-surface-800 dark:hover:text-surface-200 hover:scale-105'
+                ? 'bg-primary text-primary-contrast shadow-lg'
+                : 'text-surface-600 dark:text-surface-400 hover:bg-surface-100 dark:hover:bg-surface-800 hover:text-primary'
             ]"
           >
             <i :class="[
               item.icon, 
-              'text-lg transition-all duration-200',
+              'text-xl transition-all duration-200',
               $route.path === item.route
                 ? 'text-primary-contrast' 
-                : 'group-hover:scale-110'
+                : ''
             ]" />
           </router-link>
           
@@ -233,23 +225,21 @@ const setActiveMenu = (menuId: string) => {
     <!-- 折叠按钮 -->
     <div :class="[
       'border-t border-surface-200 dark:border-surface-700 flex-shrink-0',
-      sidebarCollapsed ? 'p-2' : 'p-3'
     ]">
       <button
         @click="toggleSidebar"
         :class="[
-          'w-full flex items-center justify-center gap-2 rounded-lg transition-all duration-200',
-          'bg-surface-100 dark:bg-surface-800 hover:bg-surface-200 dark:hover:bg-surface-700',
-          'text-surface-700 dark:text-surface-300 hover:text-surface-900 dark:hover:text-surface-100',
-          'focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2',
-          sidebarCollapsed ? 'h-11 w-11 mx-auto' : 'px-3 py-2.5'
+          'w-full flex items-center justify-center gap-3 transition-all duration-200 group',
+          'text-surface-600 dark:text-surface-400 hover:bg-surface-100 dark:hover:bg-surface-800 hover:text-primary',
+          sidebarCollapsed ? 'h-12' : 'px-3 py-3'
         ]"
       >
         <i :class="[
-          'pi transition-transform duration-200',
-          sidebarCollapsed ? 'pi-angle-right text-base' : 'pi-angle-left text-sm'
+          'pi transition-transform duration-200 text-xl',
+          sidebarCollapsed ? 'pi-angle-right' : 'pi-angle-left',
+          'group-hover:text-primary'
         ]" />
-        <span v-if="!sidebarCollapsed" class="text-sm font-medium">{{ t('collapse_menu') }}</span>
+        <span v-if="!sidebarCollapsed" class="text-sm font-medium transition-colors duration-200">{{ t('collapse_menu') }}</span>
       </button>
     </div>
   </div>

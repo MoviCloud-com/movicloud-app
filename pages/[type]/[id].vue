@@ -12,6 +12,7 @@ import { useToast } from 'primevue/usetoast'
 import { useTMDBClient } from '../../composables/useTMDBClient'
 import { useCloudDrives } from '../../composables/useCloudDrives'
 import { useMoviCloudAPI, type ResourceItem } from '../../composables/useMoviCloudAPI'
+import { useMediaInfo } from '../../composables/useMediaInfo'
 import CloudDriveFilter from '../../components/CloudDriveFilter.vue'
 import { useCountryTranslation } from '../../composables/useCountryTranslation'
 import { useSettingsCache } from '../../composables/useSettingsCache'
@@ -109,9 +110,74 @@ const {
   submitTVResource,
   rateResource: apiRateResource, 
   reportResource: apiReportResource, 
+  subscribeToMedia,
+  unsubscribeFromMedia,
+  checkSubscriptionStatus,
   loading: apiLoading, 
   error: apiError 
 } = useMoviCloudAPI()
+
+// 使用媒体信息配置
+const { 
+  resourceTypes, 
+  resolutions, 
+  videoCodecs, 
+  audioCodecs,
+  getResourceTypeByCode,
+  getResolutionByCode,
+  getVideoCodecByCode,
+  getAudioCodecByCode
+} = useMediaInfo()
+
+// 订阅状态
+const isSubscribed = ref(false)
+const subscribeLoading = ref(false)
+
+// 检查订阅状态
+const checkSubscription = async () => {
+  try {
+    isSubscribed.value = await checkSubscriptionStatus(type, id)
+  } catch (error) {
+    console.error('Failed to check subscription status:', error)
+  }
+}
+
+// 处理订阅/取消订阅
+const handleSubscribe = async () => {
+  try {
+    subscribeLoading.value = true
+    if (isSubscribed.value) {
+      await unsubscribeFromMedia(type, id)
+      isSubscribed.value = false
+      toast.add({ 
+        severity: 'success', 
+        summary: '成功', 
+        detail: t('unsubscribe_success'), 
+        life: 2000 
+      })
+    } else {
+      await subscribeToMedia(type, id)
+      isSubscribed.value = true
+      toast.add({ 
+        severity: 'success', 
+        summary: '成功', 
+        detail: t('subscribe_success'), 
+        life: 2000 
+      })
+    }
+  } catch (error) {
+    console.error('Subscription action failed:', error)
+    toast.add({ 
+      severity: 'error', 
+      summary: '错误', 
+      detail: t('operation_failed'), 
+      life: 3000 
+    })
+  } finally {
+    subscribeLoading.value = false
+  }
+}
+
 
 // 资源数据
 const resourceList = ref<ResourceItem[]>([])
@@ -170,14 +236,6 @@ const handleFilterChange = (filters: any) => {
   filterOptions.value = filters
 }
 
-// 资源类型
-const resourceTypes = computed(() => [
-  { id: 'original', name: t('bluray_original'), desc: t('bluray_original_desc') },
-  { id: 'remux', name: t('lossless_remux'), desc: t('lossless_remux_desc') },
-  { id: 'encode', name: t('high_quality_encode'), desc: t('high_quality_encode_desc') },
-  { id: 'web', name: t('web_version'), desc: t('web_version_desc') }
-])
-
 // 举报原因选项
 const reportReasons = computed(() => [
   { value: 'invalid_link', label: t('invalid_link') },
@@ -191,55 +249,6 @@ const fileSizeUnits = [
   { value: 'GB', label: 'GB' }
 ]
 
-// 分辨率选项
-const resolutionOptions = [
-  { value: '8k', label: '8K' },
-  { value: '4k', label: '4K' },
-  { value: '1080p', label: '1080p' },
-  { value: '1080i', label: '1080i' },
-  { value: '720p', label: '720p' },
-  { value: 'sd', label: 'SD' }
-]
-
-// 视频编码选项
-const videoCodecOptions = [
-  { value: 'h264', label: 'H.264(x264/AVC)' },
-  { value: 'h265', label: 'H.265(x265/HEVC)' },
-  { value: 'vc1', label: 'VC-1' },
-  { value: 'mpeg2', label: 'MPEG-2' },
-  { value: 'xvid', label: 'Xvid' },
-  { value: 'av1', label: 'AV1' },
-  { value: 'vp8', label: 'VP8/9' },
-  { value: 'avs', label: 'AVS' }
-]
-
-// 音频编码选项
-const audioCodecOptions = [
-  { value: 'aac', label: 'AAC' },
-  { value: 'ac3', label: 'AC3(DD)' },
-  { value: 'dts', label: 'DTS' },
-  { value: 'dtshd', label: 'DTS-HD MA' },
-  { value: 'eac3', label: 'E-AC3(DDP)' },
-  { value: 'eac3atoms', label: 'E-AC3 Atoms(DDP Atoms)' },
-  { value: 'truehd', label: 'TrueHD' },
-  { value: 'truehdatoms', label: 'TrueHD Atoms' }
-]
-
-// 根据value获取label的辅助函数
-const getResolutionLabel = (value: string) => {
-  const option = resolutionOptions.find(opt => opt.value === value)
-  return option ? option.label : value
-}
-
-const getVideoCodecLabel = (value: string) => {
-  const option = videoCodecOptions.find(opt => opt.value === value)
-  return option ? option.label : value
-}
-
-const getAudioCodecLabel = (value: string) => {
-  const option = audioCodecOptions.find(opt => opt.value === value)
-  return option ? option.label : value
-}
 
 // 获取详情数据
 const fetchDetails = async () => {
@@ -373,20 +382,11 @@ const downloadAllSeasons = async () => {
   }
 }
 
-// 获取资源类型名称
-const getResourceTypeName = (type: string) => {
-  const typeMap: Record<string, string> = {
-    'original': t('bluray_original'),
-    'remux': t('lossless_remux'),
-    'encode': t('high_quality_encode'),
-    'web': t('web_version')
-  }
-  return typeMap[type] || type
-}
 
 // 页面加载时获取数据
 onMounted(() => {
   fetchDetails()
+  checkSubscription()
 })
 
 // 计算属性
@@ -722,7 +722,7 @@ const submitRating = async () => {
     toast.add({ 
       severity: 'error', 
       summary: '错误', 
-      detail: apiError.value || '提交失败，请稍后重试', 
+      detail: error instanceof Error ? error.message : '提交失败，请稍后重试', 
       life: 3000 
     });
   }
@@ -773,7 +773,7 @@ const submitReport = async () => {
     toast.add({ 
       severity: 'error', 
       summary: '错误', 
-      detail: apiError.value || '提交失败，请稍后重试', 
+      detail: error instanceof Error ? error.message : '提交失败，请稍后重试', 
       life: 3000 
     });
   }
@@ -893,7 +893,7 @@ const submitResource = async () => {
     toast.add({ 
       severity: 'error', 
       summary: '错误', 
-      detail: apiError.value || '提交失败，请稍后重试', 
+      detail: error instanceof Error ? error.message : '提交失败，请稍后重试', 
       life: 3000 
     });
   }
@@ -962,7 +962,7 @@ watch(() => mediaImages.value, () => {
           <div class="mx-auto">
             <!-- 标题和基本信息 -->
             <div class="mb-6">
-              <h1 class="text-5xl 2xl:text-7xl font-bold text-gray-900 dark:text-white mb-4 text-shadow-lg/50 text-shadow-gray-600  dark:text-shadow-lg/50 dark:text-shadow-gray-300">{{ title }}</h1>
+              <h1 class="text-5xl 2xl:text-7xl font-bold text-primary dark:text-white mb-4 text-shadow-lg/50 text-shadow-gray-600  dark:text-shadow-lg/50 dark:text-shadow-gray-300">{{ title }}</h1>
               
               <!-- 基本信息行 -->
               <div class="flex items-center gap-4 text-gray-900/90 dark:text-white/90 text-sm mb-4">
@@ -1022,8 +1022,14 @@ watch(() => mediaImages.value, () => {
                 <span class="font-semibold">{{ t('submit_resource') }}</span>
               </button>
               
-              <button class="flex items-center justify-center w-12 h-12 bg-gray-900/20 dark:bg-white/20 text-gray-900 dark:text-white rounded-full hover:bg-gray-900/30 dark:hover:bg-white/30 transition-colors">
-                <i class="pi pi-star text-lg"></i>
+              <button 
+                @click="handleSubscribe"
+                :disabled="subscribeLoading"
+                class="flex items-center justify-center w-12 h-12 bg-gray-900/20 dark:bg-white/20 text-gray-900 dark:text-white rounded-full hover:bg-gray-900/30 dark:hover:bg-white/30 transition-colors disabled:opacity-50"
+                :title="isSubscribed ? t('unsubscribe') : t('subscribe')"
+              >
+                <i v-if="subscribeLoading" class="pi pi-spin pi-spinner text-lg"></i>
+                <i v-else class="pi text-lg" :class="isSubscribed ? 'pi-heart-fill text-red-500' : 'pi-heart'"></i>
               </button>
               
               <button class="flex items-center justify-center w-12 h-12 bg-gray-900/20 dark:bg-white/20 text-gray-900 dark:text-white rounded-full hover:bg-gray-900/30 dark:hover:bg-white/30 transition-colors">
@@ -1348,7 +1354,7 @@ watch(() => mediaImages.value, () => {
                     <h4 class="font-bold text-gray-900 dark:text-white text-base lg:text-xl group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors duration-300 truncate">
                         {{ getDriveById(resource.cloudDriveCode)?.name }}
                       </h4>
-                    <span class="inline-block text-xs text-gray-400 dark:text-gray-500 mt-1 truncate">{{ getResourceTypeName(resource.resourceType) }}</span>
+                    <span class="inline-block text-xs text-gray-400 dark:text-gray-500 mt-1 truncate">{{ getResourceTypeByCode(resource.resourceType)?.label }}</span>
                   </div>
                 </div>
               </div>
@@ -1366,15 +1372,15 @@ watch(() => mediaImages.value, () => {
                   <div class="text-xs text-gray-500 dark:text-gray-400">{{ t('file_size') }}</div>
                 </div>
                 <div class="text-center min-w-0 flex-shrink-0">
-                  <div class="text-base lg:text-lg font-semibold text-gray-900 dark:text-white truncate">{{ getResolutionLabel(resource.resolution) }}</div>
+                  <div class="text-base lg:text-lg font-semibold text-gray-900 dark:text-white truncate">{{ getResolutionByCode(resource.resolution)?.label }}</div>
                   <div class="text-xs text-gray-500 dark:text-gray-400">{{ t('resolution') }}</div>
                 </div>
                 <div class="text-center min-w-0 flex-shrink-0">
-                  <div class="text-base lg:text-lg font-medium text-gray-900 dark:text-white truncate" :title="getVideoCodecLabel(resource.videoCodec)">{{ getVideoCodecLabel(resource.videoCodec) }}</div>
+                  <div class="text-base lg:text-lg font-medium text-gray-900 dark:text-white truncate" :title="getVideoCodecByCode(resource.videoCodec)?.label">{{ getVideoCodecByCode(resource.videoCodec)?.label }}</div>
                   <div class="text-xs text-gray-500 dark:text-gray-400">{{ t('video_codec') }}</div>
                 </div>
                 <div class="text-center min-w-0 flex-shrink-0">
-                  <div class="text-base lg:text-lg font-medium text-gray-900 dark:text-white truncate" :title="getAudioCodecLabel(resource.audioCodec)">{{ getAudioCodecLabel(resource.audioCodec) }}</div>
+                  <div class="text-base lg:text-lg font-medium text-gray-900 dark:text-white truncate" :title="getAudioCodecByCode(resource.audioCodec)?.label">{{ getAudioCodecByCode(resource.audioCodec)?.label }}</div>
                   <div class="text-xs text-gray-500 dark:text-gray-400">{{ t('audio_codec') }}</div>
                 </div>
               </div>
@@ -1580,8 +1586,8 @@ watch(() => mediaImages.value, () => {
         <SelectButton 
           v-model="submitForm.resourceType" 
           :options="resourceTypes" 
-          optionLabel="name" 
-          optionValue="id"
+          optionLabel="label" 
+          optionValue="code"
           class="w-full"
         />
       </div>
@@ -1662,9 +1668,9 @@ watch(() => mediaImages.value, () => {
         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">{{ t('resolution') }}</label>
         <SelectButton 
           v-model="submitForm.resolution" 
-          :options="resolutionOptions" 
+          :options="resolutions" 
           optionLabel="label" 
-          optionValue="value"
+          optionValue="code"
           class="w-full"
         />
       </div>
@@ -1674,9 +1680,9 @@ watch(() => mediaImages.value, () => {
         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">{{ t('video_codec') }}</label>
         <SelectButton 
           v-model="submitForm.videoCodec" 
-          :options="videoCodecOptions" 
+          :options="videoCodecs" 
           optionLabel="label" 
-          optionValue="value"
+          optionValue="code"
           class="w-full"
         />
       </div>
@@ -1686,9 +1692,9 @@ watch(() => mediaImages.value, () => {
         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">{{ t('audio_codec') }}</label>
         <SelectButton 
           v-model="submitForm.audioCodec" 
-          :options="audioCodecOptions" 
+          :options="audioCodecs" 
           optionLabel="label" 
-          optionValue="value"
+          optionValue="code"
           class="w-full"
         />
       </div>

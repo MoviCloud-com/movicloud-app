@@ -227,8 +227,8 @@ export const media = {
   'no_sort': '不排序',
   
   // 无数据状态
-  'no_resources': '暂无资源',
-  'no_resources_desc': '该影视作品暂无可用的下载资源',
+  'no_resources': '您还没有提交任何资源',
+  'no_resources_desc': '您还未提交任何资源，快去分享您的优质资源吧！',
   'retry_load': '重新加载',
   'api_error': 'API请求失败',
   'network_error': '网络连接失败，请检查网络设置',

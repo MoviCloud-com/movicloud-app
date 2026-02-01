@@ -12,8 +12,8 @@ interface GitHubRelease {
 }
 
 export default defineEventHandler(async (event) => {
-  let currentVersion = '1.0.2'
-  let latestVersion = '1.0.2'
+  let currentVersion = '1.0.3'
+  let latestVersion = '1.0.3'
   let latestRelease: GitHubRelease | null = null
   let updateAvailable = false
 
@@ -31,7 +31,7 @@ export default defineEventHandler(async (event) => {
       try {
         if (existsSync(packageJsonPath)) {
           packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf-8'))
-          currentVersion = packageJson.version || '1.0.2'
+          currentVersion = packageJson.version || '1.0.3'
           devLog('从以下路径读取版本:', packageJsonPath, currentVersion)
           break
         }
@@ -45,7 +45,7 @@ export default defineEventHandler(async (event) => {
     if (!packageJson) {
       try {
         const { configManager } = await import('../utils/config-manager')
-        const appVersion = configManager.get('Application', 'Version', '1.0.2')
+        const appVersion = configManager.get('Application', 'Version', '1.0.3')
         currentVersion = String(appVersion)
         devLog('从配置文件读取版本:', currentVersion)
       } catch (e) {

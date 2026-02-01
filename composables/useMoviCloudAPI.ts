@@ -2,8 +2,8 @@ import { ref, readonly } from 'vue'
 import { useDev } from './useDev'
 
 // MoviCloud API 服务
-const API_BASE_URL = 'https://api.movicloud.com'
-const CLIENT_VERSION = '1.0.0'
+const API_BASE_URL = import.meta.dev ? 'http://localhost:8000' : 'https://api.movicloud.com'
+const CLIENT_VERSION = '1.0.3'
 
 // 缓存的系统ID
 let cachedSystemId: string | null = null
@@ -44,11 +44,13 @@ const getSystemIdFromDatabase = async (): Promise<string> => {
 // 获取请求头部
 const getHeaders = async (): Promise<HeadersInit> => {
   const systemId = await getSystemIdFromDatabase()
+  const config = useRuntimeConfig()
   return {
     'Content-Type': 'application/json',
     'X-System-ID': systemId,
     'X-Client-Version': CLIENT_VERSION,
-    'X-Request-Timestamp': Date.now().toString()
+    'X-Request-Timestamp': Date.now().toString(),
+    'X-Client-Platform': config.public.platform as string
   }
 }
 
@@ -320,7 +322,7 @@ export interface MemberApplication {
     icon: string
     theme_color?: string
   }
-  status: 'pending' | 'approved' | 'rejected'
+  status: 'pending' | 'submitted' | 'approved' | 'rejected'
   application_materials: Record<string, any> | Array<{ key: string; label: string; value: any }>
   reject_reason: string | null
   reviewer: string | null | { id: number; username: string; email: string }
@@ -331,6 +333,128 @@ export interface MemberApplication {
 export interface SubmitMemberApplicationRequest {
   project_id: number
   application_materials: Record<string, any>
+}
+
+// 订阅相关类型
+export interface SubscriptionItem {
+  id: number
+  media_id: number
+  media_type: 'movie' | 'tv'
+  title?: string
+  poster_path?: string
+  backdrop_path?: string
+  release_date?: string
+  vote_average?: number
+  status?: string
+  created_at: string
+}
+
+// 订阅资源
+const subscribeToMedia = async (mediaType: string, mediaId: number): Promise<void> => {
+  const systemId = await getSystemIdFromDatabase()
+  await request('/api/subscriptions', {
+    method: 'POST',
+    body: JSON.stringify({
+      resourceType: mediaType,
+      mediaId: mediaId
+    })
+  })
+}
+
+// 取消订阅
+const unsubscribeFromMedia = async (mediaType: string, mediaId: number): Promise<void> => {
+  const systemId = await getSystemIdFromDatabase()
+  await request(`/api/subscriptions`, {
+    method: 'DELETE',
+    body: JSON.stringify({
+      resourceType: mediaType,
+      mediaId: mediaId
+    })
+  })
+}
+
+// 检查订阅状态
+const checkSubscriptionStatus = async (mediaType: string, mediaId: number): Promise<boolean> => {
+  const systemId = await getSystemIdFromDatabase()
+  // 如果没有系统ID，说明未安装或未配置，直接返回未订阅
+  if (!systemId) return false
+  
+  try {
+    const response = await request(`/api/subscriptions/check?resourceType=${mediaType}&mediaId=${mediaId}`)
+    return response.isSubscribed
+  } catch (error) {
+    return false
+  }
+}
+
+// 获取我的订阅列表
+const getMySubscriptions = async (params?: { page?: number; limit?: number }): Promise<{
+  data: SubscriptionItem[]
+  total: number
+  current_page: number
+  last_page: number
+}> => {
+  const systemId = await getSystemIdFromDatabase()
+  const queryParams = new URLSearchParams()
+  queryParams.append('system_id', systemId)
+  if (params?.page) queryParams.append('page', params.page.toString())
+  if (params?.limit) queryParams.append('limit', params.limit.toString())
+  
+  const response = await request(`/api/subscriptions?${queryParams.toString()}`)
+  
+  // 适配新的API响应格式
+  const subscriptions = response.subscriptions || []
+  const mappedSubscriptions = subscriptions.map((item: any) => ({
+    id: item.id,
+    media_id: item.mediaId,
+    media_type: item.resourceType,
+    created_at: item.createdAt,
+    title: item.title,
+    poster_path: item.posterPath,
+    backdrop_path: item.backdropPath,
+    release_date: item.releaseDate,
+    vote_average: item.voteAverage,
+    status: item.status
+  }))
+
+  const total = response.total || 0
+  const limit = params?.limit || 20
+  
+  return {
+    data: mappedSubscriptions,
+    total: total,
+    current_page: params?.page || 1,
+    last_page: Math.ceil(total / limit)
+  }
+}
+
+// 获取我的资源列表（已发布/已保存）
+const getMyResources = async (params?: { page?: number; limit?: number; type?: 'movie' | 'tv' }): Promise<{
+  data: ResourceItem[]
+  total?: number
+  current_page?: number
+  last_page?: number
+}> => {
+  const queryParams = new URLSearchParams()
+  if (params?.page) queryParams.append('page', params.page.toString())
+  if (params?.limit) queryParams.append('limit', params.limit.toString())
+  if (params?.type) queryParams.append('type', params.type)
+  
+  const response = await request(`/api/my/resources?${queryParams.toString()}`)
+  
+  // 适配API响应格式 { resources: [], total: 104 }
+  if (response.resources) {
+    const limit = params?.limit || 20
+    const total = response.total || 0
+    return {
+      data: response.resources,
+      total: total,
+      current_page: params?.page || 1,
+      last_page: Math.ceil(total / limit)
+    }
+  }
+  
+  return response
 }
 
 // 获取可申请项目列表
@@ -415,6 +539,17 @@ const uploadNetdiskImage = async (file: File): Promise<UploadImageResponse> => {
   }
 }
 
+export interface NetdiskSummary {
+  date: string
+  new_total: number
+  transfer_total: number
+}
+
+// 获取网盘推广数据汇总
+const getNetdiskSummary = async (applicationId: number): Promise<NetdiskSummary> => {
+  return await request(`/api/netdisk/summary/${applicationId}`)
+}
+
 // API响应类型
 interface APIResponse<T = any> {
   success: boolean
@@ -446,6 +581,11 @@ export interface ResourceItem {
   ratingCount?: number | null
   createdAt: string
   updatedAt: string
+  type: 'movie' | 'tv'
+  
+  // 前端辅助字段
+  title?: string
+  poster_path?: string
 }
 
 // 评分请求类型
@@ -499,12 +639,20 @@ export const useMoviCloudAPI = () => {
     markNotificationAsRead,
     markAllNotificationsAsRead,
     
+    // 订阅相关API
+    subscribeToMedia,
+    unsubscribeFromMedia,
+    checkSubscriptionStatus,
+    getMySubscriptions,
+    getMyResources,
+
     // 网盘申请API函数
     getNetdiskProjects,
     getNetdiskProjectDetails,
     submitMemberApplication,
     getMyApplications,
     uploadNetdiskImage,
+    getNetdiskSummary,
     
     // 工具函数
     getSystemIdFromDatabase

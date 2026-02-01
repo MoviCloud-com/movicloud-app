@@ -227,8 +227,8 @@ export const media = {
   'no_sort': 'No Sort',
   
   // No data states
-  'no_resources': 'No Resources',
-  'no_resources_desc': 'No download resources available for this media',
+  'no_resources': 'You have not submitted any resources yet',
+  'no_resources_desc': 'You have not submitted any resources yet. Share your quality resources now!',
   'retry_load': 'Retry',
   'api_error': 'API Request Failed',
   'network_error': 'Network connection failed, please check your network settings',

@@ -12,12 +12,8 @@ export const media = {
   'overview': '簡介',
   'release_date': '上映日期',
   'runtime': '片長',
-  'rating': '評分',
-  'rating_count': '評價人數',
-  'rating_count_format': '{count}人評分',
   'vote_average': '平均評分',
   'vote_count': '評分人數',
-  'popularity': '熱門度',
   'status': '狀態',
   'budget': '預算',
   'revenue': '票房',
@@ -60,6 +56,38 @@ export const media = {
   'thriller': '驚悚',
   'war': '戰爭',
   'western': '西部',
+  
+  // 篩選和排序
+  'sort': '排序',
+  'genre': '風格',
+  'language': '語言',
+  'rating': '評分',
+  'rating_count': '評價人數',
+  'rating_count_format': '{count}人評分',
+  'reset': '重置',
+  'all_genres': '全部風格',
+  'popularity': '人氣',
+  'latest': '最新',
+  'name': '名稱',
+  'no_more_data': '沒有更多數據了',
+  'loading_more': '正在加載更多',
+  'desc': '降序',
+  'asc': '升序',
+
+  // 語言名稱
+  'chinese': '中文',
+  'english': '英語',
+  'japanese': '日語',
+  'korean': '韓語',
+  'french': '法語',
+  'german': '德語',
+  'spanish': '西班牙語',
+  'italian': '義大利語',
+  'russian': '俄語',
+  'portuguese': '葡萄牙語',
+  'arabic': '阿拉伯語',
+  'hindi': '印地語',
+  'thai': '泰語',
   
   // 搜索和筛选
   'search_movies': '搜尋電影',
@@ -106,7 +134,6 @@ export const media = {
   'bitrate': '位元率',
   'frame_rate': '幀率',
   'duration': '時長',
-  'language': '語言',
   'subtitles': '字幕',
   'audio_tracks': '音軌',
   
@@ -131,22 +158,13 @@ export const media = {
   'submit': '提交',
   'cancel_submission': '取消提交',
   
-  // 评分和评论
-  'rate_this_resource': '為此資源評分',
-  'write_review': '撰寫評論',
-  'your_rating': '您的評分',
-  'your_review': '您的評論',
-  'submit_review': '提交評論',
-  'edit_review': '編輯評論',
-  'delete_review': '刪除評論',
-  
-  // 举报
-  'report_this_resource': '舉報此資源',
+  // 評分和舉報
+  'rate_this_resource': '為這個資源評分',
+  'report_this_resource': '舉報這個資源',
   'report_reason': '舉報原因',
-  'report_description': '舉報描述',
-  'submit_report': '提交舉報',
-  'report_success': '舉報成功',
-  'report_failed': '舉報失敗',
+  'invalid_link': '連結失效',
+  'wrong_content': '內容錯誤',
+  'spam': '垃圾訊息',
   
   // 电影/电视剧库和筛选相关
   movie_library: '電影庫',
@@ -263,8 +281,8 @@ export const media = {
   'no_sort': '不排序',
   
   // 無數據狀態
-  'no_resources': '暫無資源',
-  'no_resources_desc': '該影視作品暫無可用的下載資源',
+  'no_resources': '您還沒有提交任何資源',
+  'no_resources_desc': '您還未提交任何資源，快去分享您的优质資源吧！',
   'retry_load': '重新載入',
   'api_error': 'API請求失敗',
   'network_error': '網路連接失敗，請檢查網路設定',

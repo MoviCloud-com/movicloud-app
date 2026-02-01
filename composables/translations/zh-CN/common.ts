@@ -437,5 +437,46 @@ export const common = {
   'remove_image': '移除图片',
   'review_info': '审核信息',
   'application_details': '申请详情',
-  'image_preview': '图片预览'
+  'image_preview': '图片预览',
+  
+  // 申请状态
+  'pending': '待审核',
+  'submitted': '已提交',
+  'approved': '已通过',
+  'rejected': '已拒绝',
+  'pending_desc': '用户提交申请成功，等待管理员审核',
+  'submitted_desc': '管理员将申请提交到网盘方审核',
+  'approved_desc': '网盘方审核通过，可用于数据查询',
+  'rejected_desc': '网盘方审核拒绝，通常附带拒绝原因',
+
+  // 推广数据
+  'data_summary': '数据查询',
+  'view_summary': '查看数据汇总',
+  'statistics_period': '统计周期',
+  'new_users': '拉新人数',
+  'transfers': '转存次数',
+  'no_data_available': '暂无数据',
+  
+  // 订阅和资源
+  'my_subscriptions': '我的订阅',
+  'my_subscriptions_subtitle': '查看您订阅的影视内容',
+  'my_resources': '我的资源',
+  'my_resources_subtitle': '查看您发布的电影和电视剧资源',
+  'subscribe': '订阅',
+  'unsubscribe': '取消订阅',
+  'subscribed': '已订阅',
+  'subscribe_success': '订阅成功',
+  'unsubscribe_success': '取消订阅成功',
+  'no_subscriptions': '您还没有订阅任何内容',
+  'no_subscriptions_desc': '订阅您感兴趣的影视内容，获取最新的更新提醒',
+  'no_resources': '您还没有提交任何资源',
+  'no_resources_desc': '您还未提交任何资源，快去分享您的优质资源吧！',
+  'go_to_discover': '去发现好内容',
+  'go_to_share': '去分享资源',
+  'resource_status': '资源状态',
+  'resource_type': '资源类型',
+  'release_date': '发布日期',
+  'published': '已发布',
+  'saved': '已保存',
+  'operation_failed': '操作失败'
 } 

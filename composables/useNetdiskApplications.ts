@@ -1,5 +1,5 @@
 import { ref, computed } from 'vue'
-import { useMoviCloudAPI, type NetdiskProject, type ProjectDetails, type MemberApplication, type SubmitMemberApplicationRequest } from './useMoviCloudAPI'
+import { useMoviCloudAPI, type NetdiskProject, type ProjectDetails, type MemberApplication, type SubmitMemberApplicationRequest, type NetdiskSummary } from './useMoviCloudAPI'
 import { useDev } from './useDev'
 
 export const useNetdiskApplications = () => {
@@ -7,7 +7,8 @@ export const useNetdiskApplications = () => {
     getNetdiskProjects, 
     getNetdiskProjectDetails, 
     submitMemberApplication, 
-    getMyApplications 
+    getMyApplications,
+    getNetdiskSummary
   } = useMoviCloudAPI()
   const { error: devError } = useDev()
 
@@ -15,6 +16,7 @@ export const useNetdiskApplications = () => {
   const projects = ref<NetdiskProject[]>([])
   const projectDetails = ref<ProjectDetails | null>(null)
   const myApplications = ref<MemberApplication[]>([])
+  const summaryData = ref<NetdiskSummary | null>(null)
   const loading = ref(false)
   const error = ref<string | null>(null)
 
@@ -83,6 +85,23 @@ export const useNetdiskApplications = () => {
     }
   }
 
+  // 获取推广数据汇总
+  const fetchSummary = async (applicationId: number) => {
+    loading.value = true
+    error.value = null
+    summaryData.value = null // 清空旧数据
+
+    try {
+      summaryData.value = await getNetdiskSummary(applicationId)
+    } catch (err: any) {
+      error.value = err.message || '获取推广数据失败'
+      devError('获取推广数据失败:', err)
+      throw err
+    } finally {
+      loading.value = false
+    }
+  }
+
   // 计算属性
   const activeProjects = computed(() => 
     projects.value.filter(p => p.is_active).sort((a, b) => a.sort_order - b.sort_order)
@@ -90,6 +109,10 @@ export const useNetdiskApplications = () => {
 
   const pendingApplications = computed(() => 
     myApplications.value.filter(a => a.status === 'pending')
+  )
+
+  const submittedApplications = computed(() => 
+    myApplications.value.filter(a => a.status === 'submitted')
   )
 
   const approvedApplications = computed(() => 
@@ -105,12 +128,14 @@ export const useNetdiskApplications = () => {
     projects,
     projectDetails,
     myApplications,
+    summaryData,
     loading,
     error,
     
     // 计算属性
     activeProjects,
     pendingApplications,
+    submittedApplications,
     approvedApplications,
     rejectedApplications,
     
@@ -118,7 +143,8 @@ export const useNetdiskApplications = () => {
     fetchProjects,
     fetchProjectDetails,
     submitApplication,
-    fetchMyApplications
+    fetchMyApplications,
+    fetchSummary
   }
 }
 

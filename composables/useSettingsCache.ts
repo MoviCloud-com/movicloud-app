@@ -6,16 +6,10 @@ interface SettingsCache {
     apiKey: string
     apiBaseUrl: string
     imageBaseUrl: string
-    proxyEnabled: boolean
-    proxyUrl: string
   }
   general: {
     language: string
     theme: string
-  }
-  proxy: {
-    enabled: boolean
-    url: string
   }
 }
 
@@ -93,9 +87,7 @@ const fetchTMDBSettings = async () => {
     return {
       apiKey: '',
       apiBaseUrl: 'https://api.tmdb.org',
-      imageBaseUrl: 'https://image.tmdb.org',
-      proxyEnabled: false,
-      proxyUrl: ''
+      imageBaseUrl: 'https://image.tmdb.org'
     }
   }
 }
@@ -121,23 +113,6 @@ const fetchGeneralSettings = async () => {
   }
 }
 
-// 获取代理设置
-const fetchProxySettings = async () => {
-  try {
-    const response = await $fetch<{success: boolean, data?: any, message?: string}>('/api/settings/proxy')
-    if (response.success && response.data) {
-      return response.data
-    }
-    throw new Error('获取代理设置失败')
-  } catch (error) {
-    console.error('获取代理设置失败:', error)
-    return {
-      enabled: false,
-      url: ''
-    }
-  }
-}
-
 // 初始化设置缓存
 const initializeSettings = async (forceRefresh = false) => {
   if (isLoading.value) return
@@ -156,16 +131,14 @@ const initializeSettings = async (forceRefresh = false) => {
     }
     
     // 从服务器获取最新设置
-    const [tmdbSettings, generalSettings, proxySettings] = await Promise.all([
+    const [tmdbSettings, generalSettings] = await Promise.all([
       fetchTMDBSettings(),
-      fetchGeneralSettings(),
-      fetchProxySettings()
+      fetchGeneralSettings()
     ])
     
     const newSettings: SettingsCache = {
       tmdb: tmdbSettings,
-      general: generalSettings,
-      proxy: proxySettings
+      general: generalSettings
     }
     
     // 更新缓存
@@ -200,10 +173,6 @@ const tmdbApiKey = computed(() => {
   return settingsCache.value?.tmdb.apiKey || ''
 })
 
-// 计算属性：代理设置
-const proxySettings = computed(() => {
-  return settingsCache.value?.proxy || { enabled: false, url: '' }
-})
 
 // 计算属性：通用设置
 const generalSettings = computed(() => {
@@ -221,7 +190,6 @@ export const useSettingsCache = () => {
     tmdbImageBaseUrl,
     tmdbApiBaseUrl,
     tmdbApiKey,
-    proxySettings,
     generalSettings,
     
     // 方法

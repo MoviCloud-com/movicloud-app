@@ -36,6 +36,9 @@ export const settings = {
   'http_proxy': 'HTTP 代理',
   'https_proxy': 'HTTPS 代理',
   'socks5_proxy': 'SOCKS5 代理',
+  'http_proxy_placeholder': '例如：http://127.0.0.1:7890',
+  'https_proxy_placeholder': '例如：http://127.0.0.1:7890',
+  'socks5_proxy_placeholder': '例如：socks5://127.0.0.1:7890',
   'test_proxy': '測試代理',
   'proxy_test_success': '代理測試成功',
   'proxy_test_failed': '代理測試失敗',
@@ -84,5 +87,15 @@ export const settings = {
   'failed': '失敗',
   'unknown': '未知',
   'required': '必填',
-  'optional': '可選'
+  'optional': '可選',
+  
+  // 成功和錯誤訊息
+  'save_tmdb_success': 'TMDB 設定儲存成功',
+  'save_tmdb_failed': '儲存 TMDB 設定失敗，請重試',
+  'save_proxy_success': '代理設定儲存成功',
+  'save_proxy_failed': '儲存代理設定失敗，請重試',
+  'save_language_success': '語言設定儲存成功',
+  'save_language_failed': '儲存語言設定失敗',
+  'factory_reset_success': '系統已恢復出廠設定，即將跳轉到安裝頁面',
+  'factory_reset_failed': '恢復出廠設定失敗，請重試'
 } 

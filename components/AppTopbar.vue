@@ -93,6 +93,22 @@
                       <i class="pi pi-file text-lg"></i>
                       <span>{{ t('my_applications') }}</span>
                     </button>
+
+                    <button
+                      @click="goToMySubscriptions"
+                      class="flex items-center gap-3 px-3 py-2 text-left text-surface-700 dark:text-surface-300 hover:bg-surface-100 dark:hover:bg-surface-700 rounded-lg transition-colors cursor-pointer"
+                    >
+                      <i class="pi pi-heart text-lg"></i>
+                      <span>{{ t('my_subscriptions') }}</span>
+                    </button>
+
+                    <button
+                      @click="goToMyResources"
+                      class="flex items-center gap-3 px-3 py-2 text-left text-surface-700 dark:text-surface-300 hover:bg-surface-100 dark:hover:bg-surface-700 rounded-lg transition-colors cursor-pointer"
+                    >
+                      <i class="pi pi-database text-lg"></i>
+                      <span>{{ t('my_resources') }}</span>
+                    </button>
                     
                     <button
                       @click="goToSettings"
@@ -198,8 +214,6 @@ const toggleUserMenu = () => {
   showUserMenu.value = !showUserMenu.value
 }
 
-
-
 const handleAvatarError = (event: Event) => {
   const img = event.target as HTMLImageElement
   // 隐藏图片，让SVG头像显示
@@ -218,6 +232,16 @@ const goToProfile = () => {
 const goToMyApplications = () => {
   showUserMenu.value = false
   navigateTo('/my-applications')
+}
+
+const goToMySubscriptions = () => {
+  showUserMenu.value = false
+  navigateTo('/my-subscriptions')
+}
+
+const goToMyResources = () => {
+  showUserMenu.value = false
+  navigateTo('/my-resources')
 }
 
 const goToSettings = () => {
@@ -272,4 +296,5 @@ watch(userEventBus, (event) => {
     currentUser.value = getUser()
   }
 })
-</script> 
+
+</script>

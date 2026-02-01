@@ -7,6 +7,12 @@ export default defineNuxtConfig({
   
   // 关闭 SSR，纯客户端渲染
   ssr: false,
+
+  runtimeConfig: {
+    public: {
+      platform: process.env.NUXT_PUBLIC_PLATFORM || 'unknown'
+    }
+  },
   
   // 开发服务器配置
   devServer: {
@@ -36,6 +42,14 @@ export default defineNuxtConfig({
   ],
   
   nitro: {
+    // 开发代理解决CORS问题
+    devProxy: {
+      '/movicloud-api': {
+        target: 'https://api.movicloud.com',
+        changeOrigin: true,
+        secure: false,
+      }
+    },
     // 服务器配置
     experimental: {
       wasm: true

@@ -175,7 +175,7 @@ export class ConfigManager {
   private getDefaultConfig(): ConfigData {
     return {
       Application: {
-        Version: '1.0.2',
+        Version: '1.0.3',
         Installed: false,
         InstalledAt: '',
         MigrationVersion: 1
@@ -622,7 +622,7 @@ export class ConfigManager {
   completeInstallation(): void {
     this.set('Application', 'Installed', true)
     this.set('Application', 'InstalledAt', new Date().toISOString())
-    this.set('Application', 'Version', '1.0.2')
+    this.set('Application', 'Version', '1.0.3')
     devLog('✅ 安装完成')
   }
 

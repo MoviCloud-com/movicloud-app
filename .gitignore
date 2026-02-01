@@ -26,6 +26,10 @@ logs
 # Documentation (exclude from git)
 docs/
 
+# 配置文件
+data/movicloud.conf
+data/movicloud.db
+
 # 说明文档 (除了README.md)
 *.md
 !README.md

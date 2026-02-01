@@ -7,12 +7,12 @@
         <span class="text-base font-medium text-surface-700 dark:text-surface-300 whitespace-nowrap mt-1 min-w-fit">{{ t('resource_type') }}</span>
         <div class="flex flex-wrap gap-2">
           <button
-            v-for="type in resourceTypeOptions"
-            :key="type.value"
-            @click="toggleResourceType(type.value)"
+            v-for="type in resourceTypes"
+            :key="type.code"
+            @click="toggleResourceType(type.code)"
             :class="[
               'px-3 py-1 rounded-lg text-sm font-medium transition-colors duration-200 cursor-pointer',
-              selectedResourceTypes.includes(type.value)
+              selectedResourceTypes.includes(type.code)
                 ? 'bg-primary-100 text-primary-700 dark:bg-primary-900 dark:text-primary-300'
                 : 'bg-surface-100 text-surface-700 dark:bg-surface-700 dark:text-surface-300 hover:bg-surface-200 dark:hover:bg-surface-600'
             ]"
@@ -53,12 +53,12 @@
         <span class="text-base font-medium text-surface-700 dark:text-surface-300 whitespace-nowrap mt-1 min-w-fit">{{ t('resolution') }}</span>
         <div class="flex flex-wrap gap-2">
           <button
-            v-for="res in resolutionOptions"
-            :key="res.value"
-            @click="toggleResolution(res.value)"
+            v-for="res in resolutions"
+            :key="res.code"
+            @click="toggleResolution(res.code)"
             :class="[
               'px-3 py-1 rounded-lg text-sm font-medium transition-colors duration-200 cursor-pointer',
-              selectedResolutions.includes(res.value)
+              selectedResolutions.includes(res.code)
                 ? 'bg-primary-100 text-primary-700 dark:bg-primary-900 dark:text-primary-300'
                 : 'bg-surface-100 text-surface-700 dark:bg-surface-700 dark:text-surface-300 hover:bg-surface-200 dark:hover:bg-surface-600'
             ]"
@@ -125,6 +125,7 @@
 import { t } from '../composables/useI18n'
 import { computed } from 'vue'
 import { useCloudDrives } from '../composables/useCloudDrives'
+import { useMediaInfo } from '../composables/useMediaInfo'
 
 const emit = defineEmits<{
   'filter-change': [filters: FilterOptions]
@@ -141,13 +142,8 @@ interface FilterOptions {
 // 使用公共网盘配置
 const { cloudDrives } = useCloudDrives()
 
-// 资源类型选项 - computed属性
-const resourceTypeOptions = computed(() => [
-  { label: t('bluray_original'), value: 'original' },
-  { label: t('lossless_remux'), value: 'remux' },
-  { label: t('high_quality_encode'), value: 'encode' },
-  { label: t('web_version'), value: 'web' }
-])
+// 使用媒体信息配置
+const { resourceTypes, resolutions } = useMediaInfo()
 
 // 网盘选项 - computed属性
 const cloudDriveOptions = computed(() => 
@@ -158,15 +154,6 @@ const cloudDriveOptions = computed(() =>
   }))
 )
 
-// 分辨率选项
-const resolutionOptions = [
-  { label: '8K', value: '8k' },
-  { label: '4K', value: '4k' },
-  { label: '1080p', value: '1080p' },
-  { label: '1080i', value: '1080i' },
-  { label: '720p', value: '720p' },
-  { label: 'SD', value: 'sd' }
-]
 
 // 评分排序选项
 const ratingSortOptions = computed(() => [

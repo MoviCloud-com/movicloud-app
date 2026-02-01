@@ -453,5 +453,36 @@ export const common = {
   'remove_image': '移除圖片',
   'review_info': '審核資訊',
   'application_details': '申請詳情',
-  'image_preview': '圖片預覽'
+  'image_preview': '圖片預覽',
+  
+  // 推廣數據
+  'data_summary': '數據查詢',
+  'view_summary': '查看數據匯總',
+  'statistics_period': '統計週期',
+  'new_users': '拉新人數',
+  'transfers': '轉存次數',
+  'no_data_available': '暫無數據',
+  
+  // 訂閱和資源
+  'my_subscriptions': '我的訂閱',
+  'my_subscriptions_subtitle': '查看您訂閱的影視內容',
+  'my_resources': '我的資源',
+  'my_resources_subtitle': '查看您發佈的電影和電視劇資源',
+  'subscribe': '訂閱',
+  'unsubscribe': '取消訂閱',
+  'subscribed': '已訂閱',
+  'subscribe_success': '訂閱成功',
+  'unsubscribe_success': '取消訂閱成功',
+  'no_subscriptions': '您還沒有訂閱任何內容',
+  'no_subscriptions_desc': '訂閱您感興趣的影視內容，獲取最新的更新提醒',
+  'no_resources': '您還沒有提交任何資源',
+  'no_resources_desc': '您還未提交任何資源，快去分享您的優質資源吧！',
+  'go_to_discover': '去發現好內容',
+  'go_to_share': '去分享資源',
+  'resource_status': '資源狀態',
+  'resource_type': '資源類型',
+  'release_date': '發佈日期',
+  'published': '已發佈',
+  'saved': '已儲存',
+  'operation_failed': '操作失敗'
 } 

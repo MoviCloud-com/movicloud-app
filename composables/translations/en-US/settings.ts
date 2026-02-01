@@ -21,7 +21,18 @@ export const settings = {
   saving: 'Saving...',
   
   // Proxy settings
+  proxy_enabled: 'Enable Proxy',
+  http_proxy: 'HTTP Proxy',
+  https_proxy: 'HTTPS Proxy',
+  socks5_proxy: 'SOCKS5 Proxy',
+  http_proxy_placeholder: 'e.g. http://127.0.0.1:7890',
+  https_proxy_placeholder: 'e.g. http://127.0.0.1:7890',
+  socks5_proxy_placeholder: 'e.g. socks5://127.0.0.1:7890',
   test_proxy: 'Test Proxy',
+  proxy_test_success: 'Proxy test successful',
+  proxy_test_failed: 'Proxy test failed',
+  enabled: 'Enabled',
+  disabled: 'Disabled',
   
   // Language settings
   language_description: 'Please select your preferred language, this will affect the application interface and prompts.',

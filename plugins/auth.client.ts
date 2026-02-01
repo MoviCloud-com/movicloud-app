@@ -5,10 +5,16 @@ export default defineNuxtPlugin(async () => {
 
   // 检查认证状态
   const checkAuth = () => {
+    const currentPath = router.currentRoute.value.path
     
-    // 如果已经在登录页面，不需要检查
-    if (router.currentRoute.value.path === '/login') {
-
+    // 如果已经在登录页面或安装页面，不需要检查
+    if (currentPath === '/login' || currentPath === '/install') {
+      return
+    }
+    
+    // 跳过不需要认证的路由
+    const publicRoutes = ['/install-status', '/debug', '/network-test']
+    if (publicRoutes.includes(currentPath)) {
       return
     }
     

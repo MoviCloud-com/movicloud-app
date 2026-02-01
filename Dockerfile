@@ -1,10 +1,10 @@
 # 使用官方Node.js运行时作为基础镜像
 FROM node:18-alpine AS base
+# 检查 https://github.com/nodejs/docker-node/tree/b4117f9333da4138b03a546ec926ef50a31506c3#nodealpine 了解为什么需要 libc6-compat
+RUN apk add --no-cache libc6-compat
 
 # 安装依赖
 FROM base AS deps
-# 检查 https://github.com/nodejs/docker-node/tree/b4117f9333da4138b03a546ec926ef50a31506c3#nodealpine 了解为什么需要 libc6-compat
-RUN apk add --no-cache libc6-compat
 WORKDIR /movicloud-app
 
 # 安装依赖

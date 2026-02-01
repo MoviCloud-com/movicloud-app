@@ -30,10 +30,7 @@ ENV NODE_ENV=production
 RUN mkdir -p data logs data/uploads/avatars
 
 # 复制构建输出
-COPY --from=builder /movicloud-app/.output ./
-
-# 复制public目录
-COPY --from=builder /movicloud-app/public ./public
+COPY --from=builder /movicloud-app/.output ./.output
 
 # 设置正确的权限
 RUN chown -R node:node .
@@ -48,4 +45,4 @@ ENV PORT=15078
 ENV HOSTNAME="0.0.0.0"
 
 # 启动应用
-CMD ["node", "server/index.mjs"] 
+CMD ["node", ".output/server/index.mjs"] 

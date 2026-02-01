@@ -1,10 +1,10 @@
 # 使用官方Node.js运行时作为基础镜像
 FROM node:18-alpine AS base
-# 检查 https://github.com/nodejs/docker-node/tree/b4117f9333da4138b03a546ec926ef50a31506c3#nodealpine 了解为什么需要 libc6-compat
-RUN apk add --no-cache libc6-compat
 
 # 安装依赖
 FROM base AS deps
+# 检查 https://github.com/nodejs/docker-node/tree/b4117f9333da4138b03a546ec926ef50a31506c3#nodealpine 了解为什么需要 libc6-compat
+RUN apk add --no-cache libc6-compat
 WORKDIR /movicloud-app
 
 # 安装依赖
@@ -24,19 +24,25 @@ RUN npm run build
 FROM base AS runner
 WORKDIR /movicloud-app
 
-ENV NODE_ENV=production
 
 # 复制构建输出
-COPY --from=builder /movicloud-app/.output ./.output
+COPY --from=builder /movicloud-app/.output ./movicloud
 
-# 进入 .output 目录作为工作目录
-WORKDIR /movicloud-app/.output
+# 复制public目录
+COPY --from=builder /movicloud-app/public ./movicloud/public
+
+# 进入 movicloud 目录
+WORKDIR /movicloud-app/movicloud
+
+ENV NODE_ENV=production
 
 # 创建必要的目录
 RUN mkdir -p data logs data/uploads/avatars
 
 # 设置正确的权限
-RUN chown -R node:node /movicloud-app
+RUN chown -R node:node .
+RUN chmod 755 data logs
+RUN chmod -R 755 data/uploads
 
 USER node
 

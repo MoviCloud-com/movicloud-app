@@ -1,24 +1,59 @@
-# 使用官方Node.js运行时作为基础镜像
-FROM node:18-alpine
+# 构建阶段
+FROM node:22-alpine AS builder
 
-# 安装依赖
-RUN apk add --no-cache libc6-compat
+# 设置工作目录
 WORKDIR /movicloud-app
 
-# 复制应用文件
+# 安装必要工具
+RUN apk add --no-cache \
+    python3 \
+    make \
+    g++ \
+    git \
+    curl
+
+# 复制包管理文件
 COPY package*.json ./
+COPY yarn.lock* ./
+COPY package-lock.json* ./
+
+# 安装依赖
+RUN npm ci --no-audit --prefer-offline
+
+# 复制源代码
 COPY . .
 
-# 安装依赖（包括开发依赖）
-RUN npm install
+# 构建应用
+RUN npm run build
+
+# 生产阶段
+FROM node:22-alpine AS runner
+
+# 设置工作目录
+WORKDIR /movicloud-app
+
+# 创建非root用户
+RUN addgroup -g 1001 -S nodejs
+RUN adduser -S nuxtjs -u 1001
+USER nuxtjs
+
+# 从构建阶段复制构建产物
+COPY --from=builder --chown=nuxtjs:nodejs /movicloud-app/.output ./.output
+COPY --from=builder --chown=nuxtjs:nodejs /movicloud-app/package.json ./package.json
 
 # 设置环境变量
-ENV NODE_ENV=development
+ENV NODE_ENV=production
+ENV HOST=0.0.0.0
 ENV PORT=15078
-ENV HOSTNAME="0.0.0.0"
+ENV NITRO_PORT=15078
+ENV NITRO_HOST=0.0.0.0
 
 # 暴露端口
 EXPOSE 15078
 
-# 以开发模式运行
-CMD ["npm", "run", "dev"]
+# 健康检查
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+  CMD wget --no-verbose --tries=1 --spider http://localhost:15078/api/health || exit 1
+
+# 启动应用
+CMD ["node", ".output/server/index.mjs"]

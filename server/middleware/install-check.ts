@@ -2,9 +2,16 @@ import { configManager } from '../utils/config-manager'
 import { devError } from '../utils/dev'
 
 export default defineEventHandler(async (event) => {
-  // 跳过安装相关的路由
+  // 跳过安装相关的路由和静态资源
   const url = getRequestURL(event)
-  if (url.pathname.startsWith('/api/install') || url.pathname === '/install') {
+  if (
+    url.pathname.startsWith('/api/install') || 
+    url.pathname === '/install' ||
+    url.pathname.startsWith('/_nuxt/') ||
+    url.pathname.startsWith('/api/_nuxt_icon/') ||
+    url.pathname === '/favicon.ico' ||
+    url.pathname.startsWith('/uploads/') // 允许访问上传的图片
+  ) {
     return
   }
 

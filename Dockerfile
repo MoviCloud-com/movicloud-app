@@ -13,7 +13,7 @@ RUN apk add --no-cache \
     curl
 
 # 复制包管理文件
-COPY package.json yarn.lock ./
+COPY package.json ./
 
 # 安装依赖
 RUN yarn install --frozen-lockfile

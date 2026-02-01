@@ -33,11 +33,17 @@ WORKDIR /movicloud-app
 # 创建非root用户
 RUN addgroup -g 1001 -S nodejs
 RUN adduser -S nuxtjs -u 1001
-USER nuxtjs
 
 # 从构建阶段复制构建产物
 COPY --from=builder --chown=nuxtjs:nodejs /movicloud-app/.output ./.output
 COPY --from=builder --chown=nuxtjs:nodejs /movicloud-app/package.json ./package.json
+
+# 创建必要的目录并设置权限
+RUN mkdir -p data logs data/uploads/avatars && \
+    chown -R nuxtjs:nodejs /movicloud-app
+
+# 切换用户
+USER nuxtjs
 
 # 设置环境变量
 ENV NODE_ENV=production

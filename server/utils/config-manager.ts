@@ -206,6 +206,13 @@ export class ConfigManager {
         },
         System: {
           SystemId: ''
+        },
+        CloudDrive: {
+          quark: [],
+          uc: [],
+          cloud123: [],
+          cloud115: [],
+          xunlei: []
         }
       },
       Users: {}
@@ -548,14 +555,14 @@ export class ConfigManager {
   getSetting(key: string): string | null {
     // 映射旧的 key 到新的配置路径
     const keyMap: Record<string, string> = {
-      'tmdb_api_key': 'Settings\\TMDB\\ApiKey',
-      'tmdb_api_base_url': 'Settings\\TMDB\\ApiBaseUrl',
-      'tmdb_image_base_url': 'Settings\\TMDB\\ImageBaseUrl',
-      'site_name': 'Settings\\General\\SiteName',
-      'site_description': 'Settings\\General\\SiteDescription',
-      'theme_mode': 'Settings\\General\\ThemeMode',
-      'language': 'Settings\\General\\Language',
-      'system_id': 'Settings\\System\\SystemId'
+      'tmdb_api_key': 'TMDB\\ApiKey',
+      'tmdb_api_base_url': 'TMDB\\ApiBaseUrl',
+      'tmdb_image_base_url': 'TMDB\\ImageBaseUrl',
+      'site_name': 'General\\SiteName',
+      'site_description': 'General\\SiteDescription',
+      'theme_mode': 'General\\ThemeMode',
+      'language': 'General\\Language',
+      'system_id': 'System\\SystemId'
     }
     
     const configKey = keyMap[key] || key
@@ -573,14 +580,14 @@ export class ConfigManager {
    */
   setSetting(key: string, value: string): void {
     const keyMap: Record<string, string> = {
-      'tmdb_api_key': 'Settings\\TMDB\\ApiKey',
-      'tmdb_api_base_url': 'Settings\\TMDB\\ApiBaseUrl',
-      'tmdb_image_base_url': 'Settings\\TMDB\\ImageBaseUrl',
-      'site_name': 'Settings\\General\\SiteName',
-      'site_description': 'Settings\\General\\SiteDescription',
-      'theme_mode': 'Settings\\General\\ThemeMode',
-      'language': 'Settings\\General\\Language',
-      'system_id': 'Settings\\System\\SystemId'
+      'tmdb_api_key': 'TMDB\\ApiKey',
+      'tmdb_api_base_url': 'TMDB\\ApiBaseUrl',
+      'tmdb_image_base_url': 'TMDB\\ImageBaseUrl',
+      'site_name': 'General\\SiteName',
+      'site_description': 'General\\SiteDescription',
+      'theme_mode': 'General\\ThemeMode',
+      'language': 'General\\Language',
+      'system_id': 'System\\SystemId'
     }
     
     const configKey = keyMap[key] || key
@@ -594,18 +601,18 @@ export class ConfigManager {
     const settings: Record<string, string> = {}
     
     const reverseKeyMap: Record<string, string> = {
-      'Settings\\TMDB\\ApiKey': 'tmdb_api_key',
-      'Settings\\TMDB\\ApiBaseUrl': 'tmdb_api_base_url',
-      'Settings\\TMDB\\ImageBaseUrl': 'tmdb_image_base_url',
-      'Settings\\Proxy\\Enabled': 'proxy_enabled',
-      'Settings\\Proxy\\HttpProxy': 'http_proxy',
-      'Settings\\Proxy\\HttpsProxy': 'https_proxy',
-      'Settings\\Proxy\\AllProxy': 'all_proxy',
-      'Settings\\General\\SiteName': 'site_name',
-      'Settings\\General\\SiteDescription': 'site_description',
-      'Settings\\General\\ThemeMode': 'theme_mode',
-      'Settings\\General\\Language': 'language',
-      'Settings\\System\\SystemId': 'system_id'
+      'TMDB\\ApiKey': 'tmdb_api_key',
+      'TMDB\\ApiBaseUrl': 'tmdb_api_base_url',
+      'TMDB\\ImageBaseUrl': 'tmdb_image_base_url',
+      'Proxy\\Enabled': 'proxy_enabled',
+      'Proxy\\HttpProxy': 'http_proxy',
+      'Proxy\\HttpsProxy': 'https_proxy',
+      'Proxy\\AllProxy': 'all_proxy',
+      'General\\SiteName': 'site_name',
+      'General\\SiteDescription': 'site_description',
+      'General\\ThemeMode': 'theme_mode',
+      'General\\Language': 'language',
+      'System\\SystemId': 'system_id'
     }
     
     const settingsSection = this.getSection('Settings')

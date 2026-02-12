@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { TMDBSeries, TMDBGenre } from '../composables/useTMDBClient'
+import type { TMDBSeries, TMDBGenre } from '../types'
 import { ref, onMounted, computed, nextTick, onUnmounted } from 'vue'
 import { t } from '../composables/useI18n'
 import MediaCard from '../components/MediaCard.vue'

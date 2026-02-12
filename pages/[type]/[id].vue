@@ -1600,21 +1600,21 @@ watch(() => mediaImages.value, () => {
           :options="cloudDrives" 
           optionLabel="name" 
           optionValue="code"
+          dataKey="code"
           class="w-full"
-        />
-        <!-- 显示选中的网盘信息 -->
-        <div v-if="submitForm.driveName" class="mt-3 flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
-          <img 
-            :src="getDriveById(submitForm.driveName)?.logo" 
-            :alt="getDriveById(submitForm.driveName)?.name"
-            class="w-8 h-8 rounded-lg"
-            @error="(event) => { const target = event.target as HTMLImageElement; target.src = '' }"
-          />
-          <div>
-            <div class="font-medium text-gray-900 dark:text-white">{{ getDriveById(submitForm.driveName)?.name }}</div>
-            <div class="text-sm text-gray-500 dark:text-gray-400">{{ t('selected_drive') }}</div>
-          </div>
-        </div>
+        >
+          <template #option="slotProps">
+            <div class="flex items-center gap-2">
+              <img
+                v-if="slotProps.option.logo"
+                :src="slotProps.option.logo"
+                :alt="slotProps.option.name"
+                class="w-5 h-5 rounded-md"
+              />
+              <span>{{ slotProps.option.name }}</span>
+            </div>
+          </template>
+        </SelectButton>
       </div>
 
       <!-- 电视剧季数选择 -->

@@ -59,4 +59,22 @@ export const settings = {
   save_language_failed: 'Failed to save language settings',
   factory_reset_success: 'System has been reset to factory settings, redirecting to installation page',
   factory_reset_failed: 'Failed to reset to factory settings, please try again',
+  
+  // Cloud Drive settings
+  cloud_drive_settings: 'Cloud Drive Settings',
+  cloud_drive_settings_subtitle: 'Configure your cloud drive account information',
+  quark_cloud_drive: 'Quark Cloud Drive',
+  uc_cloud_drive: 'UC Cloud Drive',
+  cloud_123: '123 Cloud Drive',
+  cloud_115: '115 Cloud Drive',
+  xunlei_cloud_drive: 'Xunlei Cloud Drive',
+  cookie: 'Cookie',
+  cookie_placeholder: 'Please enter Cookie',
+  account_name: 'Account Name',
+  account_name_placeholder: 'e.g. My Quark Account',
+  add_account: 'Add Account',
+  delete_cloud_account: 'Delete Account',
+  save_cloud_drive_settings: 'Save Cloud Drive Settings',
+  save_cloud_drive_success: 'Cloud drive settings saved successfully',
+  save_cloud_drive_failed: 'Failed to save cloud drive settings, please try again',
 } 

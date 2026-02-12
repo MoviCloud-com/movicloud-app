@@ -59,4 +59,22 @@ export const settings = {
   save_language_failed: '保存语言设置失败',
   factory_reset_success: '系统已恢复出厂设置，即将跳转到安装页面',
   factory_reset_failed: '恢复出厂设置失败，请重试',
+  
+  // 网盘设置
+  cloud_drive_settings: '网盘设置',
+  cloud_drive_settings_subtitle: '配置您的网盘账号信息',
+  quark_cloud_drive: '夸克网盘',
+  uc_cloud_drive: 'UC网盘',
+  cloud_123: '123网盘',
+  cloud_115: '115网盘',
+  xunlei_cloud_drive: '迅雷网盘',
+  cookie: 'Cookie',
+  cookie_placeholder: '请输入Cookie',
+  account_name: '账号名称',
+  account_name_placeholder: '例如：我的夸克账号',
+  add_account: '添加账号',
+  delete_cloud_account: '删除账号',
+  save_cloud_drive_settings: '保存网盘设置',
+  save_cloud_drive_success: '网盘设置保存成功',
+  save_cloud_drive_failed: '保存网盘设置失败，请重试',
 } 

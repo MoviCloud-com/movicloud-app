@@ -2,18 +2,20 @@
 import SelectButton from '../volt/SelectButton.vue';
 import InputText from '../volt/InputText.vue';
 import Select from '../volt/Select.vue';
+import Dialog from '../volt/Dialog.vue';
+import Button from '../volt/Button.vue';
 import { useLayout } from '../composables/use-layout';
 import { t, getSupportedLanguages, setLanguage, initLanguage } from '../composables/useI18n';
 import { useToast } from 'primevue/usetoast';
-import { useConfirm } from 'primevue/useconfirm';
 import type { ThemeMode } from '../types/layout';
 import { useDev } from '../composables/useDev';
 import { useSettingsCache } from '../composables/useSettingsCache';
 import { useRouter } from 'vue-router';
+import { useCloudDrives } from '../composables/useCloudDrives';
 
-const { themeMode, setThemeMode, primaryColors, surfaces, updateColors, isDarkMode, bodyFont, headingFont, updateFonts } = useLayout();
+const { themeMode, setThemeMode, primaryColors, surfaces, updateColors, bodyFont, headingFont, updateFonts } = useLayout();
+const { cloudDrives, getDriveByCode } = useCloudDrives();
 const toast = useToast();
-const confirm = useConfirm();
 const { log, error: devError } = useDev();
 const { clearCache: clearSettingsCache } = useSettingsCache();
 const router = useRouter();
@@ -29,6 +31,7 @@ const tabs = computed(() => {
   return [
     { id: 'theme', name: t('theme_settings'), icon: 'pi pi-palette' },
     { id: 'tmdb', name: 'TMDB API', icon: 'pi pi-database' },
+    { id: 'cloud-drive', name: t('cloud_drive_settings'), icon: 'pi pi-cloud' },
     { id: 'language', name: t('language_settings'), icon: 'pi pi-globe' },
     { id: 'system', name: t('system_settings'), icon: 'pi pi-cog' },
     { id: 'about', name: t('about_movicloud'), icon: 'pi pi-info-circle' }
@@ -43,9 +46,9 @@ const themeOptions = computed(() => {
   if (typeof t !== 'function') return []
   
   return [
-    { label: t('theme_light'), value: 'light' as ThemeMode },
-    { label: t('theme_dark'), value: 'dark' as ThemeMode },
-    { label: t('theme_system'), value: 'system' as ThemeMode }
+    { label: t('theme_light'), value: 'light' as ThemeMode, icon: 'pi pi-sun' },
+    { label: t('theme_dark'), value: 'dark' as ThemeMode, icon: 'pi pi-moon' },
+    { label: t('theme_system'), value: 'system' as ThemeMode, icon: 'pi pi-desktop' }
   ]
 });
 
@@ -84,6 +87,20 @@ const handleSurfaceChange = (colorName: string): void => {
 };
 
 // 设置相关
+interface CloudDriveAccount {
+  id: string
+  name: string
+  cookie: string
+}
+
+interface CloudDriveSettings {
+  quark: CloudDriveAccount[]
+  uc: CloudDriveAccount[]
+  cloud123: CloudDriveAccount[]
+  cloud115: CloudDriveAccount[]
+  xunlei: CloudDriveAccount[]
+}
+
 const settings = ref({
   tmdbApiKey: '',
   tmdbApiBaseUrl: 'https://api.tmdb.org',
@@ -96,6 +113,22 @@ const settings = ref({
   language: 'zh-CN'
 })
 
+const cloudDriveSettings = ref<CloudDriveSettings>({
+  quark: [],
+  uc: [],
+  cloud123: [],
+  cloud115: [],
+  xunlei: []
+})
+
+const activeCloudDriveTab = ref('quark')
+
+// 网盘选项
+const cloudDriveOptions = computed(() => [
+  { label: t('quark_cloud_drive'), value: 'quark' },
+  { label: t('uc_cloud_drive'), value: 'uc' }
+])
+
 const loading = ref(false)
 const saving = ref(false)
 const testResult = ref<{ success: boolean; message: string } | null>(null)
@@ -103,13 +136,27 @@ const backupLoading = ref(false)
 const restoreLoading = ref(false)
 const restoreFileInput = ref<HTMLInputElement | null>(null)
 
+// 网盘账号弹窗状态
+const accountDialogVisible = ref(false)
+const accountDialogMode = ref<'add' | 'edit'>('add')
+const currentEditingAccount = ref<{
+  type: keyof CloudDriveSettings | null
+  index: number | null
+  account: CloudDriveAccount
+}>({
+  type: null,
+  index: null,
+  account: { id: '', name: '', cookie: '' }
+})
+
 // 加载设置
 const loadSettings = async () => {
   try {
     loading.value = true
-    const [tmdbResponse, languageResponse] = await Promise.all([
-      $fetch<{ success: boolean; data?: any }>('/api/settings/tmdb'),
-      $fetch<{ success: boolean; data?: any }>('/api/settings/language')
+    const [tmdbResponse, languageResponse, cloudDriveResponse] = await Promise.all([
+      $fetch('/api/settings/tmdb'),
+      $fetch('/api/settings/language'),
+      $fetch('/api/settings/cloud-drive')
     ])
     
     if (tmdbResponse.success && tmdbResponse.data) {
@@ -122,11 +169,157 @@ const loadSettings = async () => {
       settings.value.language = languageResponse.data.language || 'zh-CN'
       setLanguage(settings.value.language)
     }
+    
+    if (cloudDriveResponse.success && cloudDriveResponse.data) {
+      cloudDriveSettings.value = {
+        quark: cloudDriveResponse.data.quark || [],
+        uc: cloudDriveResponse.data.uc || [],
+        cloud123: cloudDriveResponse.data.cloud123 || [],
+        cloud115: cloudDriveResponse.data.cloud115 || [],
+        xunlei: cloudDriveResponse.data.xunlei || []
+      }
+    }
   } catch (error) {
     devError('加载设置失败:', error)
   } finally {
     loading.value = false
   }
+}
+
+const loadCloudDriveSettings = async () => {
+  try {
+    const response = await $fetch('/api/settings/cloud-drive')
+    if (response.success && response.data) {
+      cloudDriveSettings.value = {
+        quark: response.data.quark || [],
+        uc: response.data.uc || [],
+        cloud123: response.data.cloud123 || [],
+        cloud115: response.data.cloud115 || [],
+        xunlei: response.data.xunlei || []
+      }
+    }
+  } catch (error) {
+    devError('加载网盘设置失败:', error)
+  }
+}
+
+const saveCloudDriveSettings = async () => {
+  try {
+    saving.value = true
+    
+    await $fetch('/api/settings/cloud-drive', {
+      method: 'POST',
+      body: cloudDriveSettings.value
+    })
+    
+    clearSettingsCache()
+    
+    toast.add({
+      severity: 'success',
+      summary: t('success'),
+      detail: t('save_cloud_drive_success'),
+      life: 3000
+    })
+  } catch (error) {
+    devError('保存网盘设置失败:', error)
+    toast.add({
+      severity: 'error',
+      summary: t('error'),
+      detail: t('save_cloud_drive_failed'),
+      life: 3000
+    })
+  } finally {
+    saving.value = false
+  }
+}
+
+const addCloudDriveAccount = (type: keyof CloudDriveSettings) => {
+  const newAccount: CloudDriveAccount = {
+    id: Date.now().toString(),
+    name: '',
+    cookie: ''
+  }
+  const accounts = cloudDriveSettings.value[type]
+  if (Array.isArray(accounts)) {
+    accounts.push(newAccount)
+  }
+}
+
+const openAddAccountDialog = (type: keyof CloudDriveSettings) => {
+  accountDialogMode.value = 'add'
+  currentEditingAccount.value = {
+    type: type,
+    index: null,
+    account: {
+      id: Date.now().toString(),
+      name: '',
+      cookie: ''
+    }
+  }
+  accountDialogVisible.value = true
+}
+
+const openEditAccountDialog = (type: keyof CloudDriveSettings, index: number) => {
+  const accounts = cloudDriveSettings.value[type]
+  if (Array.isArray(accounts) && accounts[index]) {
+    accountDialogMode.value = 'edit'
+    currentEditingAccount.value = {
+      type: type,
+      index: index,
+      account: { ...accounts[index] }
+    }
+    accountDialogVisible.value = true
+  }
+}
+
+const saveAccountFromDialog = async () => {
+  if (!currentEditingAccount.value.type) return
+  
+  const { type, index, account } = currentEditingAccount.value
+  
+  if (!account.name.trim()) {
+    toast.add({
+      severity: 'error',
+      summary: t('error'),
+      detail: '请输入账号名称',
+      life: 3000
+    })
+    return
+  }
+  
+  if (!account.cookie.trim()) {
+    toast.add({
+      severity: 'error',
+      summary: t('error'),
+      detail: '请输入Cookie',
+      life: 3000
+    })
+    return
+  }
+  
+  const accounts = cloudDriveSettings.value[type]
+  if (Array.isArray(accounts)) {
+    if (accountDialogMode.value === 'add') {
+      accounts.push(account)
+    } else if (accountDialogMode.value === 'edit' && index !== null) {
+      accounts[index] = account
+    }
+  }
+  
+  accountDialogVisible.value = false
+  
+  // 自动保存
+  await saveCloudDriveSettings()
+}
+
+const deleteCloudDriveAccount = async (type: keyof CloudDriveSettings, index: number) => {
+  const accounts = cloudDriveSettings.value[type]
+  if (Array.isArray(accounts)) {
+    accounts.splice(index, 1)
+  }
+  
+  // 自动保存
+  await saveCloudDriveSettings()
 }
 
 // 保存TMDB设置
@@ -170,7 +363,7 @@ const saveLanguageSettings = async () => {
   try {
     saving.value = true
     
-    const response = await $fetch<{success: boolean, message: string}>('/api/settings/language', {
+    const response = await $fetch('/api/settings/language', {
       method: 'POST',
       body: {
         language: settings.value.language
@@ -216,7 +409,7 @@ const testTMDB = async () => {
   try {
     testResult.value = null
     
-    const response = await $fetch<{success: boolean, message: string}>('/api/settings/test-tmdb', {
+    const response = await $fetch('/api/settings/test-tmdb', {
       method: 'POST',
       body: {
         apiKey: settings.value.tmdbApiKey,
@@ -357,20 +550,6 @@ interface VersionInfo {
   } | null
 }
 
-interface VersionResponse {
-  success: boolean
-  currentVersion: string
-  latestVersion: string
-  updateAvailable: boolean
-  latestRelease: {
-    tag_name: string
-    name: string
-    published_at: string
-    html_url: string
-    body: string
-  } | null
-}
-
 const versionInfo = ref<VersionInfo>({
   currentVersion: '1.0.0',
   latestVersion: '1.0.0',
@@ -382,7 +561,7 @@ const versionLoading = ref(false)
 const fetchVersionInfo = async () => {
   versionLoading.value = true
   try {
-    const response = await $fetch<VersionResponse>('/api/version')
+    const response = await $fetch('/api/version')
     if (response.success) {
       versionInfo.value = {
         currentVersion: response.currentVersion,
@@ -393,8 +572,8 @@ const fetchVersionInfo = async () => {
     } else {
       // 即使 success 为 false，也更新显示（至少显示当前版本）
       versionInfo.value = {
-        currentVersion: response.currentVersion || '1.0.3',
-        latestVersion: response.latestVersion || '1.0.3',
+        currentVersion: response.currentVersion || '1.0.4',
+        latestVersion: response.latestVersion || '1.0.4',
         updateAvailable: false,
         latestRelease: null
       }
@@ -403,8 +582,8 @@ const fetchVersionInfo = async () => {
     devError('获取版本信息失败:', error)
     // 出错时至少显示当前版本
     versionInfo.value = {
-      currentVersion: '1.0.3',
-      latestVersion: '1.0.3',
+      currentVersion: '1.0.4',
+      latestVersion: '1.0.4',
       updateAvailable: false,
       latestRelease: null
     }
@@ -499,7 +678,14 @@ useHead({
                 :allowEmpty="false"
                 :unselectable="false"
                 class="w-full max-w-md"
-              />
+              >
+                <template #option="slotProps">
+                  <div class="flex items-center gap-2">
+                    <i :class="slotProps.option.icon" class="text-lg"></i>
+                    <span>{{ slotProps.option.label }}</span>
+                  </div>
+                </template>
+              </SelectButton>
             </div>
           </div>
 
@@ -730,6 +916,154 @@ useHead({
                 <span>{{ testResult.message }}</span>
               </div>
             </div>
+          </div>
+        </div>
+        
+        <!-- 网盘设置选项卡 -->
+        <div v-if="activeTab === 'cloud-drive'" class="bg-surface-200 dark:bg-surface-800 rounded-2xl shadow-lg p-6">
+          <div class="flex justify-between items-start mb-8">
+            <div>
+              <h3 class="text-xl font-bold text-surface-900 dark:text-surface-0 mb-1">{{ t('cloud_drive_settings') }}</h3>
+              <p class="text-sm text-surface-600 dark:text-surface-400">{{ t('cloud_drive_settings_subtitle') }}</p>
+            </div>
+            <button
+              @click="openAddAccountDialog(activeCloudDriveTab as keyof CloudDriveSettings)"
+              class="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-primary-500 to-primary-600 text-white rounded-xl hover:from-primary-600 hover:to-primary-700 hover:shadow-lg transition-all duration-200"
+            >
+              <i class="pi pi-plus"></i>
+              <span class="font-medium">{{ t('add_account') }}</span>
+            </button>
+          </div>
+          
+          <div v-if="loading" class="text-center py-12">
+            <div class="w-16 h-16 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center mx-auto mb-4">
+              <i class="pi pi-spin pi-spinner text-3xl text-primary-500"></i>
+            </div>
+            <p class="text-surface-600 dark:text-surface-400">{{ t('loading_settings') }}</p>
+          </div>
+          
+          <div v-else>
+            <!-- 网盘子选项卡 -->
+            <div class="mb-8">
+              <SelectButton
+                v-model="activeCloudDriveTab"
+                :options="cloudDriveOptions"
+                optionLabel="label"
+                optionValue="value"
+                dataKey="value"
+                :multiple="false"
+                :allowEmpty="false"
+                :unselectable="false"
+                class="w-full max-w-md"
+              >
+                <template #option="slotProps">
+                  <div class="flex items-center gap-2">
+                    <img
+                      v-if="getDriveByCode(slotProps.option.value)?.logo"
+                      :src="getDriveByCode(slotProps.option.value)?.logo"
+                      :alt="slotProps.option.label"
+                      class="w-5 h-5 rounded-md"
+                    />
+                    <span>{{ slotProps.option.label }}</span>
+                  </div>
+                </template>
+              </SelectButton>
+            </div>
+            
+            <!-- 夸克网盘设置 -->
+            <div v-if="activeCloudDriveTab === 'quark'" class="space-y-4">
+              <div v-if="!cloudDriveSettings.quark || cloudDriveSettings.quark.length === 0" class="text-center py-16">
+                <div class="w-24 h-24 rounded-2xl bg-surface-100 dark:bg-surface-700/30 flex items-center justify-center mx-auto mb-6">
+                  <i class="pi pi-cloud text-5xl text-surface-400 dark:text-surface-500"></i>
+                </div>
+                <h4 class="text-lg font-medium text-surface-700 dark:text-surface-300 mb-2">还没有账号</h4>
+                <p class="text-surface-500 dark:text-surface-400 mb-6">点击上方按钮添加您的第一个账号</p>
+              </div>
+              
+              <div v-else class="space-y-4">
+                <div
+                  v-for="(account, index) in (cloudDriveSettings.quark || [])"
+                  :key="account.id"
+                  class="group bg-surface-50 dark:bg-surface-700/50 rounded-2xl p-5 hover:bg-surface-100 dark:hover:bg-surface-700 transition-all duration-200"
+                >
+                  <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-4">
+                      <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-yellow-400 to-orange-500 flex items-center justify-center">
+                        <i class="pi pi-user text-white text-2xl"></i>
+                      </div>
+                      <div>
+                        <h5 class="font-semibold text-lg text-surface-900 dark:text-surface-0">{{ account.name || '未命名账号' }}</h5>
+                      </div>
+                    </div>
+                    <div class="flex items-center gap-2">
+                      <button
+                        @click="openEditAccountDialog('quark', index)"
+                        class="w-10 h-10 rounded-xl flex items-center justify-center text-surface-500 dark:text-surface-400 hover:text-primary-500 dark:hover:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-all duration-200"
+                        :title="t('edit')"
+                      >
+                        <i class="pi pi-pencil text-lg"></i>
+                      </button>
+                      <button
+                        @click="deleteCloudDriveAccount('quark', index)"
+                        class="w-10 h-10 rounded-xl flex items-center justify-center text-surface-500 dark:text-surface-400 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all duration-200"
+                        :title="t('delete_cloud_account')"
+                      >
+                        <i class="pi pi-trash text-lg"></i>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- UC网盘设置 -->
+            <div v-else-if="activeCloudDriveTab === 'uc'" class="space-y-4">
+              
+              <div v-if="!cloudDriveSettings.uc || cloudDriveSettings.uc.length === 0" class="text-center py-16">
+                <div class="w-24 h-24 rounded-2xl bg-surface-100 dark:bg-surface-700/30 flex items-center justify-center mx-auto mb-6">
+                  <i class="pi pi-cloud text-5xl text-surface-400 dark:text-surface-500"></i>
+                </div>
+                <h4 class="text-lg font-medium text-surface-700 dark:text-surface-300 mb-2">还没有账号</h4>
+                <p class="text-surface-500 dark:text-surface-400 mb-6">点击上方按钮添加您的第一个账号</p>
+              </div>
+              
+              <div v-else class="space-y-4">
+                <div
+                  v-for="(account, index) in (cloudDriveSettings.uc || [])"
+                  :key="account.id"
+                  class="group bg-surface-50 dark:bg-surface-700/50 rounded-2xl p-5 hover:bg-surface-100 dark:hover:bg-surface-700 transition-all duration-200"
+                >
+                  <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-4">
+                      <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-400 to-indigo-500 flex items-center justify-center">
+                        <i class="pi pi-user text-white text-2xl"></i>
+                      </div>
+                      <div>
+                        <h5 class="font-semibold text-lg text-surface-900 dark:text-surface-0">{{ account.name || '未命名账号' }}</h5>
+                      </div>
+                    </div>
+                    <div class="flex items-center gap-2">
+                      <button
+                        @click="openEditAccountDialog('uc', index)"
+                        class="w-10 h-10 rounded-xl flex items-center justify-center text-surface-500 dark:text-surface-400 hover:text-primary-500 dark:hover:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-all duration-200"
+                        :title="t('edit')"
+                      >
+                        <i class="pi pi-pencil text-lg"></i>
+                      </button>
+                      <button
+                        @click="deleteCloudDriveAccount('uc', index)"
+                        class="w-10 h-10 rounded-xl flex items-center justify-center text-surface-500 dark:text-surface-400 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all duration-200"
+                        :title="t('delete_cloud_account')"
+                      >
+                        <i class="pi pi-trash text-lg"></i>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+
           </div>
         </div>
         
@@ -1023,6 +1357,53 @@ useHead({
       </div>
     </div>
     
+    <!-- 账号管理弹窗 -->
+    <Dialog
+      v-model:visible="accountDialogVisible"
+      :header="accountDialogMode === 'add' ? '添加账号' : '编辑账号'"
+      :style="{ width: '500px' }"
+      :breakpoints="{ '960px': '75vw', '640px': '90vw' }"
+    >
+      <div class="space-y-5">
+        <div>
+          <label class="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-2">
+            账号名称
+          </label>
+          <InputText
+            v-model="currentEditingAccount.account.name"
+            type="text"
+            placeholder="请输入账号名称"
+            class="w-full"
+            autocomplete="off"
+          />
+        </div>
+        
+        <div>
+          <label class="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-2">
+            Cookie
+          </label>
+          <textarea
+            v-model="currentEditingAccount.account.cookie"
+            placeholder="请粘贴Cookie内容"
+            class="w-full h-40 p-3 border border-surface-300 dark:border-surface-600 rounded-lg bg-surface-0 dark:bg-surface-800 text-surface-900 dark:text-surface-0 resize-none"
+          ></textarea>
+        </div>
+      </div>
+      
+      <template #footer>
+        <div class="flex justify-end gap-3">
+          <Button
+            label="取消"
+            variant="text"
+            @click="accountDialogVisible = false"
+          />
+          <Button
+            label="保存"
+            @click="saveAccountFromDialog"
+          />
+        </div>
+      </template>
+    </Dialog>
 
   </div>
 </template>

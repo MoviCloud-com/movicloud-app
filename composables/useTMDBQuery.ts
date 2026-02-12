@@ -9,7 +9,7 @@ import type {
 
 // 获取TMDB配置
 const getTMDBConfig = async (): Promise<TMDBConfig> => {
-  const response = await $fetch<{ success: boolean; data: any }>('/api/settings/tmdb')
+  const response = await $fetch('/api/settings/tmdb')
   if (!response.success) throw new Error('获取TMDB配置失败')
   
   return response.data

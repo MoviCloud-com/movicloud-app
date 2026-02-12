@@ -86,7 +86,7 @@ export default defineEventHandler(async (event) => {
           if (install) {
             configManager.set('Application', 'Installed', install.is_installed || false)
             configManager.set('Application', 'InstalledAt', install.installed_at || '')
-            configManager.set('Application', 'Version', install.version || '1.0.3')
+            configManager.set('Application', 'Version', install.version || '1.0.4')
           }
           devLog('恢复了安装状态')
         }

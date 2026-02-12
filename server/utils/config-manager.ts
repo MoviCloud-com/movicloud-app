@@ -22,10 +22,6 @@ export class ConfigManager {
 
   constructor() {
     const cwd = process.cwd()
-    
-    // 检查是否在编译后的目录中运行
-    const hasServerIndex = existsSync(join(cwd, 'server', 'index.mjs'))
-    
     // 配置文件路径：始终使用运行时工作目录的 data 文件夹
     this.configPath = join(cwd, 'data', 'movicloud.conf')
     
@@ -79,7 +75,7 @@ export class ConfigManager {
       // 匹配节 [Section]
       const sectionMatch = trimmed.match(/^\[(.+)\]$/)
       if (sectionMatch) {
-        currentSection = sectionMatch[1]
+        currentSection = sectionMatch[1] || ''
         if (!config[currentSection]) {
           config[currentSection] = {}
         }
@@ -89,8 +85,8 @@ export class ConfigManager {
       // 匹配键值对 Key=Value 或 Key\SubKey=Value
       const keyValueMatch = trimmed.match(/^(.+?)=(.*)$/)
       if (keyValueMatch && currentSection) {
-        const key = keyValueMatch[1].trim()
-        let value: string | number | boolean | string[] = keyValueMatch[2].trim()
+        const key = keyValueMatch[1]?.trim() || ''
+        let value: string | number | boolean | string[] = keyValueMatch[2]?.trim() ?? ''
         
         // 处理特殊值
         if (value === 'true') {
@@ -103,6 +99,16 @@ export class ConfigManager {
         } else if (value.startsWith('@Invalid()')) {
           // 处理 @Invalid() 格式
           value = ''
+        } else if (value === '[object Object]') {
+          // 处理错误的 [object Object] 字符串
+          value = {}
+        } else if (value.startsWith('[') || value.startsWith('{')) {
+          // 尝试解析 JSON（处理数组和对象）
+          try {
+            value = JSON.parse(value)
+          } catch {
+            // 如果解析失败，保留原样
+          }
         } else if (!isNaN(Number(value)) && value !== '' && !value.includes('.')) {
           // 尝试转换为数字（排除浮点数，避免时间戳被转换）
           // 只转换纯整数
@@ -114,17 +120,21 @@ export class ConfigManager {
         
         // 处理嵌套键（使用 \ 分隔）
         const keys = key.split('\\')
-        let target = config[currentSection]
+        let target: ConfigSection = config[currentSection]!
         
         for (let i = 0; i < keys.length - 1; i++) {
           const k = keys[i]
-          if (!target[k] || typeof target[k] !== 'object' || Array.isArray(target[k])) {
+          if (!k) continue
+          if (!target[k] || typeof target[k] !== 'object' || Array.isArray(target[k]) || target[k] === null) {
             target[k] = {}
           }
           target = target[k] as ConfigSection
         }
         
-        target[keys[keys.length - 1]] = value
+        const lastKey = keys[keys.length - 1]
+        if (lastKey) {
+          target[lastKey] = value
+        }
       }
     }
     
@@ -144,18 +154,20 @@ export class ConfigManager {
         for (const [key, value] of Object.entries(obj)) {
           const fullKey = prefix ? `${prefix}\\${key}` : key
           
-          if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
+          if (typeof value === 'object' && value !== null && !Array.isArray(value) && Object.keys(value).length > 0) {
+            // 只有非空对象才递归展开
             flatten(value as ConfigSection, fullKey)
           } else {
             let stringValue: string
             if (typeof value === 'boolean') {
               stringValue = value ? 'true' : 'false'
-            } else if (Array.isArray(value)) {
-              stringValue = value.join(',')
+            } else if (Array.isArray(value) || typeof value === 'object') {
+              // 数组或对象使用 JSON 序列化
+              stringValue = JSON.stringify(value)
             } else if (typeof value === 'number') {
               stringValue = String(value)
             } else {
-              stringValue = String(value)
+              stringValue = String(value ?? '')
             }
             lines.push(`${fullKey}=${stringValue}`)
           }
@@ -175,7 +187,7 @@ export class ConfigManager {
   private getDefaultConfig(): ConfigData {
     return {
       Application: {
-        Version: '1.0.3',
+        Version: '1.0.4',
         Installed: false,
         InstalledAt: '',
         MigrationVersion: 1
@@ -245,17 +257,21 @@ export class ConfigManager {
     }
     
     const keys = key.split('\\')
-    let target = this.config[section]
+    let target: ConfigSection = this.config[section]!
     
     for (let i = 0; i < keys.length - 1; i++) {
       const k = keys[i]
+      if (!k) continue
       if (!target[k] || typeof target[k] !== 'object' || Array.isArray(target[k])) {
         target[k] = {}
       }
       target = target[k] as ConfigSection
     }
     
-    target[keys[keys.length - 1]] = value
+    const lastKey = keys[keys.length - 1]
+    if (lastKey) {
+      target[lastKey] = value
+    }
     this.saveConfig()
   }
 
@@ -268,17 +284,25 @@ export class ConfigManager {
     }
     
     const keys = key.split('\\')
-    let target = this.config[section]
+    let target: ConfigSection | undefined = this.config[section]
+    
+    if (!target) {
+      return
+    }
     
     for (let i = 0; i < keys.length - 1; i++) {
       const k = keys[i]
+      if (!k) return
       if (!target[k] || typeof target[k] !== 'object' || Array.isArray(target[k])) {
         return
       }
       target = target[k] as ConfigSection
     }
     
-    delete target[keys[keys.length - 1]]
+    const lastKey = keys[keys.length - 1]
+    if (lastKey) {
+      delete target[lastKey]
+    }
     this.saveConfig()
   }
 
@@ -607,6 +631,48 @@ export class ConfigManager {
     return settings
   }
 
+  getCloudDriveSettings(): any {
+    const settingsSection = this.getSection('Settings')
+    let cloudDriveSettings = {
+      quark: [],
+      uc: [],
+      cloud123: [],
+      cloud115: [],
+      xunlei: []
+    }
+    
+    if (settingsSection && settingsSection.CloudDrive) {
+      const rawSettings = settingsSection.CloudDrive
+      
+      // 确保每个属性都是数组
+      for (const key of ['quark', 'uc', 'cloud123', 'cloud115', 'xunlei']) {
+        if (rawSettings[key]) {
+          // 如果是字符串，尝试解析为 JSON
+          if (typeof rawSettings[key] === 'string') {
+            try {
+              const parsed = JSON.parse(rawSettings[key])
+              cloudDriveSettings[key as keyof typeof cloudDriveSettings] = Array.isArray(parsed) ? parsed : []
+            } catch {
+              cloudDriveSettings[key as keyof typeof cloudDriveSettings] = []
+            }
+          } else if (Array.isArray(rawSettings[key])) {
+            cloudDriveSettings[key as keyof typeof cloudDriveSettings] = rawSettings[key]
+          } else {
+            cloudDriveSettings[key as keyof typeof cloudDriveSettings] = []
+          }
+        }
+      }
+    }
+    
+    return cloudDriveSettings
+  }
+
+  setCloudDriveSettings(settings: any): void {
+    const settingsSection = this.getSection('Settings') || {}
+    settingsSection.CloudDrive = settings
+    this.setSection('Settings', settingsSection)
+  }
+
   // ========== 安装相关方法 ==========
 
   /**
@@ -622,7 +688,7 @@ export class ConfigManager {
   completeInstallation(): void {
     this.set('Application', 'Installed', true)
     this.set('Application', 'InstalledAt', new Date().toISOString())
-    this.set('Application', 'Version', '1.0.3')
+    this.set('Application', 'Version', '1.0.4')
     devLog('✅ 安装完成')
   }
 

@@ -45,17 +45,11 @@ const menuItems = computed(() => [
     route: '/tv'
   },
   {
-    id: 'netdisk-applications',
-    label: t('netdisk_applications'),
+    id: 'cloud',
+    label: t('cloud'),
     icon: 'pi pi-cloud',
-    route: '/netdisk-applications'
+    route: '/cloud'
   },
-  // {
-  //   id: 'files',
-  //   label: t('file_management'),
-  //   icon: 'pi pi-folder',
-  //   route: '/cloud'
-  // },
   {
     id: 'settings',
     label: t('settings'),

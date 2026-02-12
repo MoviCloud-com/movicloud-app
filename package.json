@@ -1,12 +1,13 @@
 {
   "name": "movicloud",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "private": true,
   "type": "module",
   "scripts": {
     "build": "nuxt build",
     "build:fnOS": "NUXT_PUBLIC_PLATFORM=fnOS nuxt build",
     "build:Synology": "NUXT_PUBLIC_PLATFORM=Synology nuxt build",
+    "build:Docker": "NUXT_PUBLIC_PLATFORM=Docker nuxt build",
     "dev": "nuxt dev",
     "generate": "nuxt generate",
     "preview": "cd .output && NITRO_PORT=15078 node server/index.mjs",

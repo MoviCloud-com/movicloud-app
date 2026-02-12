@@ -76,7 +76,7 @@ const clearCache = () => {
 // 获取TMDB设置
 const fetchTMDBSettings = async () => {
   try {
-    const response = await $fetch<{success: boolean, data?: any, message?: string}>('/api/settings/tmdb')
+    const response = await $fetch('/api/settings/tmdb')
     if (response.success && response.data) {
       return response.data
     }
@@ -96,8 +96,8 @@ const fetchTMDBSettings = async () => {
 const fetchGeneralSettings = async () => {
   try {
     const [languageRes, themeRes] = await Promise.all([
-      $fetch<{success: boolean, data?: string}>('/api/settings/language'),
-      $fetch<{success: boolean, data?: string}>('/api/settings/theme')
+      $fetch('/api/settings/language'),
+      $fetch('/api/settings/theme')
     ])
     
     return {

@@ -22,7 +22,7 @@ RUN yarn install --frozen-lockfile
 COPY . .
 
 # 构建应用
-RUN yarn build
+RUN yarn build:Docker
 
 # 生产阶段
 FROM node:22-alpine AS runner

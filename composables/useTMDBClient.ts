@@ -31,7 +31,7 @@ export const useTMDBClient = () => {
 		if (tmdbConfigInFlight) return tmdbConfigInFlight
 		tmdbConfigInFlight = (async () => {
 			try {
-				const response = await $fetch<{ success: boolean; data: any }>('/api/settings/tmdb')
+				const response = await $fetch('/api/settings/tmdb')
 				if (!response.success) throw new Error('获取TMDB配置失败')
 				cachedTMDBConfig = response.data
 				tmdbConfigFetchedAt = Date.now()

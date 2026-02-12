@@ -97,5 +97,23 @@ export const settings = {
   'save_language_success': '語言設定儲存成功',
   'save_language_failed': '儲存語言設定失敗',
   'factory_reset_success': '系統已恢復出廠設定，即將跳轉到安裝頁面',
-  'factory_reset_failed': '恢復出廠設定失敗，請重試'
+  'factory_reset_failed': '恢復出廠設定失敗，請重試',
+  
+  // 網盤設定
+  'cloud_drive_settings': '網盤設定',
+  'cloud_drive_settings_subtitle': '設定您的網盤帳號資訊',
+  'quark_cloud_drive': '誇克網盤',
+  'uc_cloud_drive': 'UC網盤',
+  'cloud_123': '123網盤',
+  'cloud_115': '115網盤',
+  'xunlei_cloud_drive': '迅雷網盤',
+  'cookie': 'Cookie',
+  'cookie_placeholder': '請輸入Cookie',
+  'account_name': '帳號名稱',
+  'account_name_placeholder': '例如：我的誇克帳號',
+  'add_account': '新增帳號',
+  'delete_cloud_account': '刪除帳號',
+  'save_cloud_drive_settings': '儲存網盤設定',
+  'save_cloud_drive_success': '網盤設定儲存成功',
+  'save_cloud_drive_failed': '儲存網盤設定失敗，請重試'
 } 

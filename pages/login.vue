@@ -146,14 +146,7 @@ const handleLogin = async () => {
   error.value = ''
 
   try {
-    const response = await $fetch<{
-      success: boolean
-      message: string
-      data?: {
-        user: any
-        token: string
-      }
-    }>('/api/auth/login', {
+    const response = await $fetch('/api/auth/login', {
       method: 'POST',
       body: {
         username: formData.value.username,

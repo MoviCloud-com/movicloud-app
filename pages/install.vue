@@ -366,10 +366,7 @@ const testTMDBConnection = async () => {
   }
 
   try {
-    const response = await $fetch<{
-      success: boolean
-      message: string
-    }>('/api/install/test-tmdb', {
+    const response = await $fetch('/api/install/test-tmdb', {
       method: 'POST',
       body: {
         apiKey: formData.value.tmdbApiKey,
@@ -393,10 +390,7 @@ const startInstallation = async () => {
   installing.value = true
   
   try {
-    const response = await $fetch<{
-      success: boolean
-      message: string
-    }>('/api/install/complete', {
+    const response = await $fetch('/api/install/complete', {
       method: 'POST',
       body: {
         tmdbApiKey: formData.value.tmdbApiKey,

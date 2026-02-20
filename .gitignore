@@ -26,6 +26,9 @@ logs
 # Documentation (exclude from git)
 docs/
 
+# Package script
+package-release.sh
+
 # 架构相关
 x86_64/
 arm/

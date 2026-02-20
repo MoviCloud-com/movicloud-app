@@ -35,7 +35,7 @@ RUN addgroup -g 1001 -S nodejs
 RUN adduser -S nuxtjs -u 1001
 
 # 从构建阶段复制构建产物
-COPY --from=builder --chown=nuxtjs:nodejs /movicloud-app/dist/Docker ./dist/Docker
+COPY --from=builder --chown=nuxtjs:nodejs /movicloud-app/dist/Docker ./
 COPY --from=builder --chown=nuxtjs:nodejs /movicloud-app/package.json ./package.json
 
 # 创建必要的目录并设置权限
@@ -60,4 +60,4 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
   CMD wget --no-verbose --tries=1 --spider http://localhost:15078/api/health || exit 1
 
 # 启动应用
-CMD ["node", "dist/Docker/server/index.mjs"]
+CMD ["node", "server/index.mjs"]

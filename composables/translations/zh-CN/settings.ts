@@ -62,7 +62,7 @@ export const settings = {
   
   // 网盘设置
   cloud_drive_settings: '网盘设置',
-  cloud_drive_settings_subtitle: '配置您的网盘账号信息',
+  cloud_drive_settings_subtitle: '配置您的网盘账号信息，不会将您的账号密码存储在MoviCloud的服务器上，仅本地存储和使用',
   quark_cloud_drive: '夸克网盘',
   uc_cloud_drive: 'UC网盘',
   cloud_123: '123网盘',
@@ -77,4 +77,20 @@ export const settings = {
   save_cloud_drive_settings: '保存网盘设置',
   save_cloud_drive_success: '网盘设置保存成功',
   save_cloud_drive_failed: '保存网盘设置失败，请重试',
+  
+  // 飞牛影视设置
+  trimedia_settings: '飞牛影视',
+  enable_trimedia: '启用飞牛影视',
+  trimedia_host: '服务端地址',
+  trimedia_host_placeholder: '例如：http://192.168.1.100:5666/v',
+  trimedia_host_hint: '请输入飞牛影视的服务端地址',
+  trimedia_username: '用户名',
+  trimedia_username_placeholder: '请输入用户名',
+  trimedia_password: '密码',
+  trimedia_password_placeholder: '请输入密码',
+  save_trimedia_success: '飞牛影视设置保存成功',
+  save_trimedia_failed: '保存飞牛影视设置失败，请重试',
+  trimedia_connection_success: '飞牛影视连接成功',
+  trimedia_connection_failed: '飞牛影视连接失败，请检查配置',
+  please_fill_all_fields: '请填写所有必填字段',
 } 

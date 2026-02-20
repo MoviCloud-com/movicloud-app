@@ -2,6 +2,16 @@
 import type { TMDBMovie, TMDBSeries, TMDBGenre, TMDBResponse } from '../types'
 import { getCurrentLanguage } from './useI18n'
 
+interface TMDBConfigResponse {
+  success: boolean
+  data?: {
+    apiKey: string
+    apiBaseUrl: string
+    imageBaseUrl: string
+  }
+  message?: string
+}
+
 // 图片基础域名内存缓存（模块级，跨实例共享）
 let cachedImageBaseUrl: string | null = null
 let imageBaseUrlFetchedAt = 0
@@ -31,7 +41,7 @@ export const useTMDBClient = () => {
 		if (tmdbConfigInFlight) return tmdbConfigInFlight
 		tmdbConfigInFlight = (async () => {
 			try {
-				const response = await $fetch('/api/settings/tmdb')
+				const response = await $fetch<TMDBConfigResponse>('/api/settings/tmdb')
 				if (!response.success) throw new Error('获取TMDB配置失败')
 				cachedTMDBConfig = response.data
 				tmdbConfigFetchedAt = Date.now()

@@ -7,10 +7,12 @@ import { triggerUserEvent } from '../composables/useUserEvents';
 import Dialog from '../volt/Dialog.vue';
 import InputText from '../volt/InputText.vue';
 import { useUserProfile } from '../composables/useUserProfile';
+import { useDemoMode } from '../composables/useDemoMode';
 
 const toast = useToast();
 const { log, error: devError } = useDev();
 const { fetchProfile, uploadAvatar, deleteAvatar, putUsername, putNickname, putEmail, putPassword } = useUserProfile();
+const { checkDemoPermission } = useDemoMode();
 
 // 用户数据
 const user = ref({
@@ -95,6 +97,8 @@ const handleAvatarSelect = (event: Event) => {
 
 // 更新头像
 const updateAvatar = async () => {
+  if (!checkDemoPermission()) return
+  
   if (!avatarForm.value.avatar) {
     toast.add({ severity: 'error', summary: t('error'), detail: t('please_select_avatar'), life: 3000 });
     return;
@@ -121,6 +125,8 @@ const updateAvatar = async () => {
 
 // 清除头像
 const clearAvatar = async () => {
+  if (!checkDemoPermission()) return
+  
   if (saving.value) return;
   saving.value = true;
   try {
@@ -143,6 +149,8 @@ const clearAvatar = async () => {
 
 // 更新基本信息
 const updateBasicInfo = async () => {
+  if (!checkDemoPermission()) return
+  
   if (!basicForm.value.username.trim()) {
     toast.add({ severity: 'error', summary: t('error'), detail: t('username_required'), life: 3000 });
     return;
@@ -189,6 +197,8 @@ const updateBasicInfo = async () => {
 
 // 更新密码
 const updatePassword = async () => {
+  if (!checkDemoPermission()) return
+  
   if (!passwordForm.value.currentPassword || !passwordForm.value.newPassword || !passwordForm.value.confirmPassword) {
     toast.add({ severity: 'error', summary: t('error'), detail: t('all_fields_required'), life: 3000 });
     return;

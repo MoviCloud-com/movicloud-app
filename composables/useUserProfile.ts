@@ -8,6 +8,15 @@ export interface UserProfile {
   avatar?: string
 }
 
+const parseErrorResponse = async (res: Response, defaultMsg: string): Promise<string> => {
+  try {
+    const data = await res.json()
+    return data?.statusMessage || data?.message || defaultMsg
+  } catch {
+    return defaultMsg
+  }
+}
+
 export const useUserProfile = () => {
   const { getToken } = useAuth()
 
@@ -21,7 +30,7 @@ export const useUserProfile = () => {
     const res = await fetch('/api/user/profile', { headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' } })
     if (!res.ok) {
       if (res.status === 401) throw new Error('unauthorized')
-      throw new Error('get_user_profile_failed')
+      throw new Error(await parseErrorResponse(res, 'get_user_profile_failed'))
     }
     return await res.json()
   }
@@ -31,40 +40,33 @@ export const useUserProfile = () => {
     const form = new FormData()
     form.append('avatar', file)
     const res = await fetch('/api/user/avatar', { method: 'POST', headers: getAuthHeaders(), body: form })
-    if (!res.ok) throw new Error('failed_to_update_avatar')
+    if (!res.ok) throw new Error(await parseErrorResponse(res, 'failed_to_update_avatar'))
     return await res.json()
   }
 
   const deleteAvatar = async (): Promise<void> => {
     const res = await fetch('/api/user/avatar', { method: 'DELETE', headers: getAuthHeaders() })
-    if (!res.ok) throw new Error('clear_avatar_failed')
+    if (!res.ok) throw new Error(await parseErrorResponse(res, 'clear_avatar_failed'))
   }
 
   const putUsername = async (username: string): Promise<void> => {
     const res = await fetch('/api/user/username', { method: 'PUT', headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' }, body: JSON.stringify({ username }) })
-    if (!res.ok) throw new Error('failed_to_update_username')
+    if (!res.ok) throw new Error(await parseErrorResponse(res, 'failed_to_update_username'))
   }
 
   const putNickname = async (nickname: string): Promise<void> => {
     const res = await fetch('/api/user/nickname', { method: 'PUT', headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' }, body: JSON.stringify({ nickname }) })
-    if (!res.ok) throw new Error('failed_to_update_nickname')
+    if (!res.ok) throw new Error(await parseErrorResponse(res, 'failed_to_update_nickname'))
   }
 
   const putEmail = async (email: string): Promise<void> => {
     const res = await fetch('/api/user/email', { method: 'PUT', headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' }, body: JSON.stringify({ email }) })
-    if (!res.ok) throw new Error('failed_to_update_email')
+    if (!res.ok) throw new Error(await parseErrorResponse(res, 'failed_to_update_email'))
   }
 
   const putPassword = async (currentPassword: string, newPassword: string): Promise<void> => {
     const res = await fetch('/api/user/password', { method: 'PUT', headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' }, body: JSON.stringify({ currentPassword, newPassword }) })
-    if (!res.ok) {
-      try {
-        const data = await res.json()
-        throw new Error(data?.message || 'password_update_failed')
-      } catch {
-        throw new Error('password_update_failed')
-      }
-    }
+    if (!res.ok) throw new Error(await parseErrorResponse(res, 'password_update_failed'))
   }
 
   return {

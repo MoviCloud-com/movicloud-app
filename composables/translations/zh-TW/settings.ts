@@ -101,7 +101,7 @@ export const settings = {
   
   // 網盤設定
   'cloud_drive_settings': '網盤設定',
-  'cloud_drive_settings_subtitle': '設定您的網盤帳號資訊',
+  'cloud_drive_settings_subtitle': '設定您的網盤帳號資訊，不會將您的帳號密碼儲存在MoviCloud的伺服器上，僅本地儲存和使用',
   'quark_cloud_drive': '誇克網盤',
   'uc_cloud_drive': 'UC網盤',
   'cloud_123': '123網盤',
@@ -115,5 +115,21 @@ export const settings = {
   'delete_cloud_account': '刪除帳號',
   'save_cloud_drive_settings': '儲存網盤設定',
   'save_cloud_drive_success': '網盤設定儲存成功',
-  'save_cloud_drive_failed': '儲存網盤設定失敗，請重試'
+  'save_cloud_drive_failed': '儲存網盤設定失敗，請重試',
+  
+  // 飛牛影視設定
+  'trimedia_settings': '飛牛影視',
+  'enable_trimedia': '啟用飛牛影視',
+  'trimedia_host': '伺服器位址',
+  'trimedia_host_placeholder': '例如：http://192.168.1.100:5666/v',
+  'trimedia_host_hint': '請輸入飛牛影視的伺服器位址',
+  'trimedia_username': '使用者名稱',
+  'trimedia_username_placeholder': '請輸入使用者名稱',
+  'trimedia_password': '密碼',
+  'trimedia_password_placeholder': '請輸入密碼',
+  'save_trimedia_success': '飛牛影視設定儲存成功',
+  'save_trimedia_failed': '儲存飛牛影視設定失敗，請重試',
+  'trimedia_connection_success': '飛牛影視連線成功',
+  'trimedia_connection_failed': '飛牛影視連線失敗，請檢查設定',
+  'please_fill_all_fields': '請填寫所有必填欄位'
 } 

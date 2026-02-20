@@ -13,16 +13,18 @@ interface LayoutState {
   surface: string
   bodyFont: string
   headingFont: string
+  initialized: boolean
 }
 
 export const useLayoutStore = defineStore('layout', {
   state: (): LayoutState => ({
     sidebarCollapsed: false,
     themeMode: 'system',
-    primary: 'emerald',
+    primary: 'movicloud',
     surface: 'zinc',
-    bodyFont: 'system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, \"PingFang SC\", \"Noto Sans CJK SC\", \"Microsoft YaHei\", sans-serif',
-    headingFont: 'system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, \"PingFang SC\", \"Noto Sans CJK SC\", \"Microsoft YaHei\", sans-serif'
+    bodyFont: '"DingTalk-JinBuTi", system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "PingFang SC", "Noto Sans CJK SC", "Microsoft YaHei", sans-serif',
+    headingFont: '"AlimamaShuHeiTi-Bold", system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "PingFang SC", "Noto Sans CJK SC", "Microsoft YaHei", sans-serif',
+    initialized: false
   }),
 
   getters: {
@@ -37,8 +39,7 @@ export const useLayoutStore = defineStore('layout', {
     }
   },
 
-  actions: {
-    // 获取系统主题
+  actions: { 
     getSystemTheme(): 'light' | 'dark' {
       if (process.client && window.matchMedia) {
         return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
@@ -46,7 +47,6 @@ export const useLayoutStore = defineStore('layout', {
       return 'light'
     },
 
-    // 应用字体到 CSS 变量
     applyFonts() {
       if (!process.client) return
       const root = document.documentElement
@@ -54,19 +54,17 @@ export const useLayoutStore = defineStore('layout', {
       root.style.setProperty('--app-heading-font', this.headingFont)
     },
 
-    // 更新字体设置
-    updateFonts({ bodyFont, headingFont }: { bodyFont?: string; headingFont?: string }) {
+    async updateFonts({ bodyFont, headingFont }: { bodyFont?: string; headingFont?: string }) {
       if (typeof bodyFont === 'string' && bodyFont.length > 0) {
         this.bodyFont = bodyFont
       }
       if (typeof headingFont === 'string' && headingFont.length > 0) {
         this.headingFont = headingFont
-      }
-      this.saveToStorage()
+      } 
       this.applyFonts()
+      await this.saveToServer()
     },
 
-    // 应用暗色模式
     applyDarkMode(dark: boolean) {
       if (process.client) {
         const root = document.documentElement
@@ -78,111 +76,141 @@ export const useLayoutStore = defineStore('layout', {
       }
     },
 
-    // 设置主题模式
-    setThemeMode(mode: ThemeMode) {
+    async setThemeMode(mode: ThemeMode) {
       this.themeMode = mode
-      this.saveToStorage()
-      
-      // 立即应用主题
+
       if (mode === 'system') {
         this.applyDarkMode(this.getSystemTheme() === 'dark')
       } else {
         this.applyDarkMode(mode === 'dark')
       }
 
-      // 监听系统主题变化
       if (process.client && mode === 'system') {
         const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
         const handleChange = () => this.applyDarkMode(mediaQuery.matches)
         mediaQuery.addEventListener('change', handleChange)
       }
+      
+      await this.saveToServer()
     },
-
-    // 切换暗色模式
+    
     toggleDarkMode() {
       const newMode = this.isDarkMode ? 'light' : 'dark'
       this.setThemeMode(newMode)
     },
 
-    // 设置侧边栏状态
     setSidebarCollapsed(collapsed: boolean) {
       this.sidebarCollapsed = collapsed
-      this.saveToStorage()
-      
-      // 发送自定义事件通知其他组件
+    
       if (process.client) {
         window.dispatchEvent(new CustomEvent('sidebar-toggle', {
           detail: { collapsed }
         }))
       }
     },
-
-    // 切换侧边栏
+    
     toggleSidebar() {
       this.setSidebarCollapsed(!this.sidebarCollapsed)
     },
 
-    // 更新颜色设置
-    updateColors(type: 'primary' | 'surface', color: Color) {
+    applyColorsOnly(primaryColor?: Color, surfaceColor?: Color) {
+      if (!process.client) return
+      
+      const root = document.documentElement
+      
+      if (primaryColor) {
+        this.primary = primaryColor.name
+        Object.entries(primaryColor.palette).forEach(([key, value]) => {
+          root.style.setProperty(`--p-primary-${key}`, value)
+        })
+      }
+      
+      if (surfaceColor) {
+        this.surface = surfaceColor.name
+        Object.entries(surfaceColor.palette).forEach(([key, value]) => {
+          root.style.setProperty(`--p-surface-${key}`, value)
+        })
+      }
+    },
+
+    async updateColors(type: 'primary' | 'surface', color: Color) {
       if (type === 'primary') {
         this.primary = color.name
       } else {
         this.surface = color.name
       }
-      
-      this.saveToStorage()
-      
-      // 应用颜色到 CSS 变量
+  
       if (process.client) {
         const root = document.documentElement
         Object.entries(color.palette).forEach(([key, value]) => {
           root.style.setProperty(`--p-${type}-${key}`, value)
         })
       }
+      
+      await this.saveToServer()
     },
 
-    // 从 localStorage 恢复状态
-    async initializeFromStorage() {
+    async loadFromServer() {
       if (!process.client) return
-      
-      try {
-        const saved = localStorage.getItem('layout-settings')
-        if (saved) {
-          const parsed = JSON.parse(saved)
-          this.$patch(parsed)
+            try {
+        const response = await $fetch<{
+          success: boolean
+          data: {
+            themeMode?: string
+            primary?: string
+            surface?: string
+            bodyFont?: string
+            headingFont?: string
+          }
+        }>('/api/settings/theme')
+        if (response.success && response.data) {
+          this.themeMode = (response.data.themeMode as ThemeMode) || 'system'
+          this.primary = response.data.primary || 'movicloud'
+          this.surface = response.data.surface || 'zinc'
+          this.bodyFont = response.data.bodyFont || this.bodyFont
+          this.headingFont = response.data.headingFont || this.headingFont
         }
       } catch (error) {
-        console.warn('Failed to restore layout settings:', error)
-      }
-      
-      // 初始化主题
-      this.initializeTheme()
-      // 应用字体
-      this.applyFonts()
+        console.warn('Failed to load theme settings from server:', error)
+      } 
     },
-    
-    // 保存到 localStorage
-    saveToStorage() {
+
+    async saveToServer() {
       if (!process.client) return
       
       try {
-        localStorage.setItem('layout-settings', JSON.stringify(this.$state))
+        await $fetch('/api/settings/theme', {
+          method: 'POST',
+          body: {
+            themeMode: this.themeMode,
+            primary: this.primary,
+            surface: this.surface,
+            bodyFont: this.bodyFont,
+            headingFont: this.headingFont
+          }
+        })
       } catch (error) {
-        console.warn('Failed to save layout settings:', error)
+        console.warn('Failed to save theme settings to server:', error)
       }
     },
 
-    // 初始化主题
+    async initializeFromStorage() {
+      if (!process.client || this.initialized) return
+      
+      await this.loadFromServer()
+      this.initializeTheme()
+      this.applyFonts()
+      this.initialized = true
+    },
+
     initializeTheme() {
-      if (process.client) {
-        // 应用当前主题
+      if (process.client) { 
         if (this.themeMode === 'system') {
           this.applyDarkMode(this.getSystemTheme() === 'dark')
         } else {
           this.applyDarkMode(this.themeMode === 'dark')
         }
 
-        // 监听系统主题变化
         if (this.themeMode === 'system') {
           const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
           const handleChange = () => this.applyDarkMode(mediaQuery.matches)

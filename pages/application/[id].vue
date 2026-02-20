@@ -331,6 +331,7 @@ import { useNetdiskApplications } from '../../composables/useNetdiskApplications
 import { useMoviCloudAPI, type NetdiskProject, type ApplicationField } from '../../composables/useMoviCloudAPI'
 import { t } from '../../composables/useI18n'
 import { useToast } from 'primevue/usetoast'
+import { useDemoMode } from '../../composables/useDemoMode'
 
 // 定义页面元信息，确保路由正确匹配
 definePageMeta({
@@ -340,6 +341,7 @@ definePageMeta({
 
 const route = useRoute()
 const router = useRouter()
+const { checkDemoPermission } = useDemoMode()
 
 // 使用 computed 来响应路由参数变化
 const projectId = computed(() => {
@@ -418,6 +420,8 @@ const isFormValid = computed(() => {
 
 // 处理文件上传
 const handleFileUpload = async (event: Event, fieldKey: string) => {
+  if (!checkDemoPermission()) return
+  
   const input = event.target as HTMLInputElement
   const file = input.files?.[0]
   
@@ -477,6 +481,8 @@ const handleFileUpload = async (event: Event, fieldKey: string) => {
 
 // 处理表单提交
 const handleSubmit = async () => {
+  if (!checkDemoPermission()) return
+  
   if (!isFormValid.value) return
 
   submitLoading.value = true

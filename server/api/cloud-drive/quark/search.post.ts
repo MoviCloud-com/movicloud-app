@@ -1,12 +1,12 @@
-import { QuarkClient } from '~/server/utils/quark'
+import { QuarkClient } from '../../../utils/quark'
 
 export default defineEventHandler(async (event) => {
   try {
     const body = await readBody(event)
-    const { cookies, query, page = 1, pageSize = 50 } = body
+    const { cookies, keyword, page = 1, pageSize = 50 } = body
     
     const client = new QuarkClient({ cookies })
-    const result = await client.searchFiles(query, page, pageSize)
+    const result = await client.searchFiles(keyword, page, pageSize)
     
     return result
   } catch (error: any) {

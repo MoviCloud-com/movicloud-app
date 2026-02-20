@@ -6,6 +6,13 @@ import ConfirmDialog from './volt/ConfirmDialog.vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useAuth } from './composables/useAuth';
 import { initLanguage, t } from './composables/useI18n'
+import { useConfirm } from 'primevue/useconfirm';
+
+useHead({
+  link: [
+    { rel: 'icon', type: 'image/png', href: '/favicon.png' }
+  ]
+})
 
 // 初始化布局
 const { isDarkMode } = useLayout()

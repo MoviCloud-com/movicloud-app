@@ -7,7 +7,7 @@ import { devLog } from '../utils/dev'
 export default defineEventHandler(async (event) => {
   // 跳过不需要认证的路由
   const url = getRequestURL(event)
-  const publicRoutes = ['/login', '/install-status', '/debug', '/api/install', '/api/auth/login', '/api/network', '/api/debug', '/api/settings/tmdb', '/api/settings/language', '/api/test-proxy', '/api/tmdb/config', '/api/tmdb']
+  const publicRoutes = ['/login', '/install-status', '/debug', '/api/install', '/api/auth/login', '/api/network', '/api/debug', '/api/settings/tmdb', '/api/settings/language', '/api/settings/theme', '/api/test-proxy', '/api/tmdb/config', '/api/tmdb']
   
   // 允许访问静态资源
   const isStaticResource = url.pathname.startsWith('/assets/') || 

@@ -119,16 +119,19 @@ import { useToast } from 'primevue/usetoast'
 
 const router = useRouter()
 const toast = useToast()
-
-// 表单数据
+const config = useRuntimeConfig()
 const formData = ref({
   username: '',
   password: ''
 })
 
-// 状态
 const loading = ref(false)
 const error = ref('')
+
+if (process.client && config.public.platform === 'Demo') {
+  formData.value.username = 'movicloud'
+  formData.value.password = 'movicloud.com'
+}
 
 // 处理登录
 const handleLogin = async () => {
@@ -154,7 +157,7 @@ const handleLogin = async () => {
       }
     })
 
-    if (response.success && response.data) {
+    if (response.success && 'data' in response && response.data) {
       // 保存用户信息和token
       localStorage.setItem('user', JSON.stringify(response.data.user))
       localStorage.setItem('token', response.data.token)

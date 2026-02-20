@@ -233,7 +233,8 @@ export class UCClient {
     
     const options: RequestInit = {
       method,
-      headers: defaultHeaders
+      headers: defaultHeaders,
+      redirect: 'manual'
     }
     
     if (body && method !== 'GET') {
@@ -241,11 +242,24 @@ export class UCClient {
     }
     
     const response = await fetch(reqURL, options)
-    const responseBody = await response.text()
     
     if (this.debug) {
       console.log(`[调试] 请求: ${method} ${reqURL}`)
       console.log(`[调试] 状态码: ${response.status}`)
+      console.log(`[调试] 重定向: ${response.redirected}`)
+      if (response.status >= 300 && response.status < 400) {
+        console.log(`[调试] 重定向位置: ${response.headers.get('location')}`)
+      }
+    }
+    
+    if (response.status >= 300 && response.status < 400) {
+      const location = response.headers.get('location')
+      throw new Error(`Cookie无效，需要登录。重定向到: ${location || '未知'}`)
+    }
+    
+    const responseBody = await response.text()
+    
+    if (this.debug) {
       console.log(`[调试] 响应内容: ${responseBody}`)
     }
     
@@ -271,6 +285,9 @@ export class UCClient {
     try {
       return JSON.parse(responseBody)
     } catch (e) {
+      if (responseBody.includes('<!DOCTYPE html>') || responseBody.includes('<html')) {
+        throw new Error('Cookie无效，返回了HTML页面')
+      }
       throw new Error(`failed to decode response: ${(e as Error).message}`)
     }
   }
@@ -295,12 +312,44 @@ export class UCClient {
       }
     }
     
+    const data = jsonResp['data']
+    
+    if (!data || !data.nickname) {
+      return {
+        success: false,
+        code: 'INVALID_USER_DATA',
+        message: '返回的用户数据无效，Cookie可能已过期',
+        data: undefined
+      }
+    }
+    
     return {
       success: true,
       code,
       message: 'get user info success',
       data: jsonResp['data']
     }
+  }
+  
+  async verifyCookie(): Promise<StandardResponse> {
+    const userInfo = await this.getUserInfo()
+    
+    return {
+      success: userInfo.success,
+      code: userInfo.code,
+      message: userInfo.success ? 'Cookie is valid' : `Cookie is invalid: ${userInfo.message}`,
+      data: userInfo.data
+    }
+  }
+  
+  async getUserNickname(): Promise<string | null> {
+    const userInfo = await this.getUserInfo()
+    
+    if (!userInfo.success || !userInfo.data) {
+      return null
+    }
+    
+    return userInfo.data.nickname || null
   }
   
   async getFileInfo(remotePath: string): Promise<StandardResponse> {

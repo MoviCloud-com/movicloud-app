@@ -1,10 +1,10 @@
-import { writeFile, mkdir } from 'fs/promises'
+import { writeFile } from 'fs/promises'
 import { join } from 'path'
 import jwt from 'jsonwebtoken'
+import { getUploadsDir } from '../../utils/data-dir'
 
 export default defineEventHandler(async (event) => {
   try {
-    // 从请求头获取认证token
     const authHeader = getHeader(event, 'authorization')
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
       throw createError({
@@ -31,7 +31,6 @@ export default defineEventHandler(async (event) => {
       })
     }
 
-    // 检查文件类型
     const allowedTypes = ['image/jpeg', 'image/png', 'image/gif']
     if (!allowedTypes.includes(avatarFile.type || '')) {
       throw createError({
@@ -40,7 +39,6 @@ export default defineEventHandler(async (event) => {
       })
     }
 
-    // 检查文件大小 (2MB)
     if (avatarFile.data.length > 2 * 1024 * 1024) {
       throw createError({
         statusCode: 400,
@@ -48,25 +46,17 @@ export default defineEventHandler(async (event) => {
       })
     }
 
-    // 创建上传目录 - 在Docker环境中使用持久化目录
-    const uploadDir = process.env.NODE_ENV === 'production' 
-      ? join(process.cwd(), 'data', 'uploads', 'avatars')
-      : join(process.cwd(), 'public', 'uploads', 'avatars')
-    await mkdir(uploadDir, { recursive: true })
+    const uploadDir = getUploadsDir('avatars')
 
-    // 生成文件名
     const timestamp = Date.now()
     const extension = avatarFile.filename.split('.').pop()
     const filename = `avatar_${timestamp}.${extension}`
     const filepath = join(uploadDir, filename)
 
-    // 保存文件
     await writeFile(filepath, avatarFile.data)
 
-    // 返回文件URL - 在生产环境中，文件保存在data目录但通过uploads路径访问
     const avatarUrl = `/uploads/avatars/${filename}`
 
-    // 验证JWT token并获取用户ID
     let userId: string
     try {
       const decoded = jwt.verify(token, process.env.JWT_SECRET || 'movicloud-secret-key') as any
@@ -78,7 +68,6 @@ export default defineEventHandler(async (event) => {
       })
     }
     
-    // 更新配置文件中的用户头像
     const { configManager } = await import('../../utils/config-manager')
     
     configManager.updateUserAvatar(userId, avatarUrl)
@@ -93,4 +82,4 @@ export default defineEventHandler(async (event) => {
       statusMessage: error instanceof Error ? error.message : 'failed_to_update_avatar'
     })
   }
-}) 
+})

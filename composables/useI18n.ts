@@ -103,7 +103,10 @@ export const getSupportedLanguages = () => supportedLanguages
 // 初始化语言设置
 export const initLanguage = async () => {
   try {
-    const response = await $fetch('/api/settings/language')
+    const response = await $fetch<{
+      success: boolean
+      data: { language: string }
+    }>('/api/settings/language')
     if (response.success) {
       currentLanguage.value = response.data.language
     }

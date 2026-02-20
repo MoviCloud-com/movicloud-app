@@ -1,7 +1,7 @@
 <template>
   <header
     :class="[
-      'sticky top-0 z-50 transition-all duration-300',
+      'sticky top-0 z-50 transition-all duration-300 mac-drag',
       backgroundClasses,
       borderClasses
     ]"
@@ -23,7 +23,7 @@
       </div>
 
       <!-- 右侧内容 -->
-      <div class="flex items-center space-x-4">
+      <div class="flex items-center space-x-4 mac-no-drag">
         <slot name="right">
           <!-- 搜索按钮 -->
           <button

@@ -2,9 +2,10 @@
 import type { TMDBMovie, TMDBSeries } from '../../types'
 import MediaCard from '../../components/MediaCard.vue'
 import Dialog from '../../volt/Dialog.vue'
-import SelectButton from '../../volt/SelectButton.vue'
+import SelectButton from '../../volt/SelectButton.vue';
 import InputText from '../../volt/InputText.vue'
 import Card from '../../volt/Card.vue'
+import SaveShareDialog from '../../components/SaveShareDialog.vue'
 import { ref, onMounted, onUnmounted, computed, nextTick, watch } from 'vue'
 import { t } from '../../composables/useI18n'
 import { useRoute } from 'vue-router'
@@ -17,11 +18,14 @@ import CloudDriveFilter from '../../components/CloudDriveFilter.vue'
 import { useCountryTranslation } from '../../composables/useCountryTranslation'
 import { useSettingsCache } from '../../composables/useSettingsCache'
 import ImageLazy from '../../components/ImageLazy.vue'
+import { useDemoMode } from '../../composables/useDemoMode'
+import { useCloudDriveAccounts } from '../../composables/useCloudDriveAccounts'
 
 // 获取路由参数
 const route = useRoute()
 const type = route.params.type as 'movie' | 'tv'
 const id = parseInt(route.params.id as string)
+const { checkDemoPermission } = useDemoMode()
 
 // 获取TMDB服务
 const { 
@@ -99,6 +103,47 @@ const submitForm = ref({
 // 使用公共网盘配置
 const { cloudDrives, getDriveById } = useCloudDrives()
 
+const { 
+  accounts: cloudDriveAccounts, 
+  quarkAccounts, 
+  ucAccounts, 
+  hasValidQuarkAccount, 
+  hasValidUCAccount, 
+  loadAccounts: loadCloudDriveAccounts 
+} = useCloudDriveAccounts()
+
+const showSaveShareDialog = ref(false)
+const currentSaveShareUrl = ref('')
+const currentSaveShareDriveCode = ref('')
+
+const openSaveShareDialog = (driveLink: string, driveCode: string) => {
+  currentSaveShareUrl.value = driveLink
+  currentSaveShareDriveCode.value = driveCode
+  showSaveShareDialog.value = true
+}
+
+const getValidAccountsForDrive = (driveCode: string) => {
+  if (driveCode === 'quark') {
+    return quarkAccounts.value.filter(acc => acc.isValid)
+  } else if (driveCode === 'uc') {
+    return ucAccounts.value.filter(acc => acc.isValid)
+  }
+  return []
+}
+
+const canShowSaveButton = (driveCode: string) => {
+  if (driveCode === 'quark') {
+    return hasValidQuarkAccount.value
+  } else if (driveCode === 'uc') {
+    return hasValidUCAccount.value
+  }
+  return false
+}
+
+onMounted(async () => {
+  await loadCloudDriveAccounts()
+})
+
 // 使用设置缓存
 const { tmdbImageBaseUrl, initializeSettings } = useSettingsCache()
 
@@ -133,12 +178,75 @@ const {
 const isSubscribed = ref(false)
 const subscribeLoading = ref(false)
 
+// 飞牛影视相关
+const trimediaExists = ref(false)
+const trimediaPlayUrl = ref<string | null>(null)
+const trimediaLoading = ref(false)
+
 // 检查订阅状态
 const checkSubscription = async () => {
   try {
     isSubscribed.value = await checkSubscriptionStatus(type, id)
   } catch (error) {
     console.error('Failed to check subscription status:', error)
+  }
+}
+
+// 检查飞牛影视中是否存在该媒体
+const checkTrimeMedia = async () => {
+  if (!mediaDetails.value) return
+  
+  try {
+    trimediaLoading.value = true
+    
+    // 先检查飞牛影视是否启用并且配置完整
+    const settingsResponse = await $fetch('/api/settings/trimedia')
+    if (!settingsResponse.success || !('data' in settingsResponse) || !settingsResponse.data) {
+      trimediaExists.value = false
+      trimediaPlayUrl.value = null
+      return
+    }
+    
+    const { enabled, host, username, password } = settingsResponse.data
+    if (!enabled || !host || !username || !password) {
+      trimediaExists.value = false
+      trimediaPlayUrl.value = null
+      return
+    }
+    
+    const title = type === 'movie' ? mediaDetails.value.title : mediaDetails.value.name
+    const year = type === 'movie' 
+      ? mediaDetails.value.release_date?.substring(0, 4) 
+      : mediaDetails.value.first_air_date?.substring(0, 4)
+    const tmdbId = id
+    
+    const response = await $fetch('/api/trimedia/check-media', {
+      method: 'POST',
+      body: {
+        title,
+        year,
+        tmdbId,
+        mediaType: type
+      }
+    })
+    
+    if (response.success && response.data) {
+      trimediaExists.value = response.data.exists
+      trimediaPlayUrl.value = response.data.playUrl
+    }
+  } catch (error) {
+    console.error('Failed to check TrimeMedia:', error)
+    trimediaExists.value = false
+    trimediaPlayUrl.value = null
+  } finally {
+    trimediaLoading.value = false
+  }
+}
+
+// 打开飞牛影视播放链接
+const openTrimeMedia = () => {
+  if (trimediaPlayUrl.value && process.client) {
+    window.open(trimediaPlayUrl.value, '_blank')
   }
 }
 
@@ -281,6 +389,9 @@ const fetchDetails = async () => {
       
       // 头图现在通过计算属性直接生成URL，无需异步加载
     }
+    
+    // 检查飞牛影视中是否存在该媒体
+    checkTrimeMedia()
     
     // 延迟获取资源数据：电影不在进入页面时加载，点击后再加载
     // if (type === 'movie') {
@@ -680,6 +791,8 @@ const rateResource = (resourceId: string) => {
 
 // 提交评分
 const submitRating = async () => {
+  if (!checkDemoPermission()) return
+  
   try {
     if (currentRating.value === 0) {
       toast.add({ 
@@ -738,6 +851,8 @@ const reportResource = (resourceId: string) => {
 
 // 提交举报
 const submitReport = async () => {
+  if (!checkDemoPermission()) return
+  
   try {
     if (!reportReason.value) {
       toast.add({ 
@@ -784,6 +899,8 @@ const toast = useToast();
 
 // 提交资源
 const submitResource = async () => {
+  if (!checkDemoPermission()) return
+  
   try {
     // 验证表单
     if (!submitForm.value.driveName) {
@@ -952,7 +1069,7 @@ watch(() => mediaImages.value, () => {
     <!-- 详情内容 -->
     <div v-else-if="mediaDetails" class="min-h-screen">
       <!-- 背景图片 -->
-      <div class="relative h-[500px] 2xl:h-[700px]">
+      <div class="relative h-[600px] 2xl:h-[700px]">
         <img class="w-full h-full object-cover mask-b-from-20% mask-b-to-80%" :src="backdropUrl" />
 
         <div class="absolute inset-0 bg-gradient-to-b from-transparent via-surface-50/50 to-surface-50 dark:via-surface-950/50 dark:to-surface-950"></div>
@@ -962,10 +1079,10 @@ watch(() => mediaImages.value, () => {
           <div class="mx-auto">
             <!-- 标题和基本信息 -->
             <div class="mb-6">
-              <h1 class="text-5xl 2xl:text-7xl font-bold text-primary dark:text-white mb-4 text-shadow-lg/50 text-shadow-gray-600  dark:text-shadow-lg/50 dark:text-shadow-gray-300">{{ title }}</h1>
+              <h1 class="text-6xl 2xl:text-7xl font-bold text-primary dark:text-white mb-4 text-shadow-lg/50 text-shadow-gray-600  dark:text-shadow-lg/50 dark:text-shadow-gray-300">{{ title }}</h1>
               
               <!-- 基本信息行 -->
-              <div class="flex items-center gap-4 text-gray-900/90 dark:text-white/90 text-sm mb-4">
+              <div class="flex items-center gap-2 text-gray-900/90 dark:text-white/90 text-sm mb-4">
                 <!-- 评分 -->
                 <div class="flex items-center gap-2 bg-gray-900/20 dark:bg-white/10 px-3 py-1.5 rounded-full border border-gray-900/30 dark:border-white/30">
                   <i class="pi pi-star text-yellow-500 text-sm"></i>
@@ -1005,20 +1122,30 @@ watch(() => mediaImages.value, () => {
             </div>
             
             <!-- 操作按钮 -->
-            <div class="flex items-center gap-4 mb-8">
+            <div class="flex items-center gap-2 mb-8">
+              <!-- 飞牛影视播放按钮 -->
+              <button 
+                v-if="trimediaExists && trimediaPlayUrl"
+                @click="openTrimeMedia"
+                class="flex items-center gap-3 py-3 px-4 2xl:px-6 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-full hover:from-purple-600 hover:to-pink-600 transition-colors"
+              >
+                <i class="pi pi-play-circle text-lg"></i>
+                <span class="font-semibold">{{ t('play_on_trimedia') }}</span>
+              </button>
+              
               <button 
                 @click="type === 'tv' ? downloadAllSeasons() : handleMovieDownload()"
-                class="flex items-center gap-3 px-8 py-3 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-colors"
+                class="flex items-center gap-3 py-3 px-4 2xl:px-6 bg-primary-500 text-white rounded-full hover:bg-primary-600 transition-colors"
               >
-                <i class="pi pi-download text-lg"></i>
+                <i class="pi pi-cloud-download text-lg"></i>
                 <span class="font-semibold">{{ type === 'tv' ? t('download_all_episodes') : t('download_save') }}</span>
               </button>
               
               <button 
                 @click="showSubmitModal = true"
-                class="flex items-center gap-3 px-6 py-3 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors"
+                class="flex items-center gap-3 py-3 px-4 2xl:px-6 bg-green-500 text-white rounded-full hover:bg-green-600 transition-colors"
               >
-                <i class="pi pi-plus text-lg"></i>
+                <i class="pi pi-cloud-upload text-lg"></i>
                 <span class="font-semibold">{{ t('submit_resource') }}</span>
               </button>
               
@@ -1030,22 +1157,18 @@ watch(() => mediaImages.value, () => {
               >
                 <i v-if="subscribeLoading" class="pi pi-spin pi-spinner text-lg"></i>
                 <i v-else class="pi text-lg" :class="isSubscribed ? 'pi-heart-fill text-red-500' : 'pi-heart'"></i>
-              </button>
-              
-              <button class="flex items-center justify-center w-12 h-12 bg-gray-900/20 dark:bg-white/20 text-gray-900 dark:text-white rounded-full hover:bg-gray-900/30 dark:hover:bg-white/30 transition-colors">
-                <i class="pi pi-ellipsis-h text-lg"></i>
-              </button>
+              </button> 
             </div>
             
             <!-- 简介 -->
             <div>
-              <p class="text-gray-900/90 dark:text-white/90 leading-relaxed max-w-3xl line-clamp-3">{{ overview }}</p>
+              <p class="text-gray-900/90 dark:text-white/90 leading-relaxed max-w-xl 2xl:max-w-3xl line-clamp-3">{{ overview }}</p>
             </div>
             
             <div v-if="mediaImages && mediaImages.logos && mediaImages.logos.length > 0 && logoUrl && !logoError" class="absolute bottom-10 right-10 z-20">
               <img
                 :src="logoUrl"
-                class="max-w-120 max-h-120 w-auto h-auto object-contain drop-shadow-2xl"
+                class="max-w-80 max-h-80 2xl:max-w-120 2xl:max-h-120 w-auto h-auto object-contain drop-shadow-2xl"
                 @error="(event) => { const target = event.target as HTMLImageElement; target.src = ''; logoError = true }"
               />
             </div>
@@ -1394,6 +1517,15 @@ watch(() => mediaImages.value, () => {
                   <i class="pi pi-external-link text-base lg:text-lg"></i>
                 </button>
                 <button
+                  v-if="canShowSaveButton(resource.cloudDriveCode)"
+                  @click="openSaveShareDialog(resource.driveLink, resource.cloudDriveCode)"
+                  class="w-10 h-10 lg:w-12 lg:h-12 bg-blue-100 hover:bg-blue-200 dark:bg-blue-700/20 dark:hover:bg-blue-700/30 text-blue-600 dark:text-blue-400 rounded-xl transition-all duration-300 flex items-center justify-center shadow-lg hover:shadow-xl transform hover:scale-110"
+                  :title="t('save_to_cloud_drive')"
+                >
+                  <i class="pi pi-cloud-upload text-base lg:text-lg"></i>
+                </button>
+                <button
+                  v-else
                   @click="copyDriveLink(resource.driveLink)"
                   class="w-10 h-10 lg:w-12 lg:h-12 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-xl transition-all duration-300 flex items-center justify-center shadow-lg hover:shadow-xl transform hover:scale-110"
                   :title="t('copy_link')"
@@ -1718,6 +1850,14 @@ watch(() => mediaImages.value, () => {
       </div>
     </template>
   </Dialog>
+
+  <SaveShareDialog
+    v-model:visible="showSaveShareDialog"
+    :share-url="currentSaveShareUrl"
+    :drive-code="currentSaveShareDriveCode"
+    :accounts="getValidAccountsForDrive(currentSaveShareDriveCode)"
+    @success="fetchResources"
+  />
 </template>
 
 <style scoped>

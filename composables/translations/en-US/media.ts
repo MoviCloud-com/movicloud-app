@@ -150,6 +150,7 @@ export const media = {
   'total_episodes': '{count} Episodes',
   'total_seasons': '{count} Seasons',
   'watch_now': 'Watch Now',
+  'play_on_trimedia': 'Play on TrimeMedia',
   'add_to_favorites': 'Add to Favorites',
   'remove_from_favorites': 'Remove from Favorites',
   'share': 'Share',

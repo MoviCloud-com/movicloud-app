@@ -1,4 +1,4 @@
-import { UCClient } from '~/server/utils/uc'
+import { UCClient } from '../../../utils/uc'
 
 export default defineEventHandler(async (event) => {
   try {

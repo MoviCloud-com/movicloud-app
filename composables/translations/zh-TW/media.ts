@@ -210,6 +210,7 @@ export const media = {
   'total_episodes': '共{count}集',
   'total_seasons': '共{count}季',
   'watch_now': '立即觀看',
+  'play_on_trimedia': '飛牛播放',
   'add_to_favorites': '加入收藏',
   'remove_from_favorites': '取消收藏',
   'more_actions': '更多操作',

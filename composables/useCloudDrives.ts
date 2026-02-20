@@ -41,40 +41,40 @@ export const useCloudDrives = () => {
       id: '115',
       name: t('115_cloud_drive'),
       code: '115',
-      logo: 'https://is1-ssl.mzstatic.com/image/thumb/Purple211/v4/e0/e0/bb/e0e0bb24-8446-46e5-46d7-8f714f1604cd/AppIcon-0-0-1x_U007emarketing-0-7-0-0-sRGB-85-220.png/512x512bb.jpg',
-      color: '#FF6B35',
+      logo: '/images/cloud-drives/115.png',
+      color: '#4064F6',
       domain: '115.com'
     },
     {
       id: '123',
       name: t('123_cloud_drive'),
       code: '123',
-      logo: 'https://is1-ssl.mzstatic.com/image/thumb/Purple211/v4/91/9b/8f/919b8f72-167f-3b87-7364-54e0cac3695b/AppIcon-0-0-1x_U007emarketing-0-7-0-85-220.png/512x512bb.jpg',
-      color: '#4A90E2',
+      logo: '/images/cloud-drives/123.png',
+      color: '#4C6DFE',
       domain: '123pan.com'
     },
     {
       id: 'uc',
       name: t('uc_cloud_drive'),
       code: 'uc',
-      logo: 'https://is1-ssl.mzstatic.com/image/thumb/Purple221/v4/91/24/05/91240514-390a-4833-0a24-4667c3571c60/AppIcon-0-1x_U007emarketing-0-4-0-0-sRGB-85-220-0.png/512x512bb.jpg',
-      color: '#FF6B6B',
+      logo: '/images/cloud-drives/uc.png',
+      color: '#F56322',
       domain: 'drive.uc.cn'
     },
     {
       id: 'quark',
       name: t('quark_cloud_drive'),
       code: 'quark',
-      logo: 'https://is1-ssl.mzstatic.com/image/thumb/Purple211/v4/6c/8c/ba/6c8cbaef-4db1-ea07-f035-b86bc72aad67/AppIcon-0-1x_U007emarketing-0-7-0-0-85-220-0.png/512x512bb.jpg',
-      color: '#50C878',
+      logo: '/images/cloud-drives/quark.png',
+      color: '#373BFE',
       domain: 'pan.quark.cn'
     },
     {
       id: 'xunlei',
       name: t('xunlei_cloud_drive'),
       code: 'xunlei',
-      logo: 'https://is1-ssl.mzstatic.com/image/thumb/Purple211/v4/40/c3/f3/40c3f340-da5f-ed7f-d234-f7794f75f5ce/AppIcon-0-0-1x_U007emarketing-0-7-0-85-220.png/512x512bb.jpg',
-      color: '#FFD700',
+      logo: '/images/cloud-drives/xunlei.png',
+      color: '#4D73FE',
       domain: 'pan.xunlei.com'
     }
   ])

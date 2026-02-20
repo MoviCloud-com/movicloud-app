@@ -10,6 +10,22 @@ interface Color {
 // 保留颜色定义
 const primaryColors = ref<Color[]>([
     {
+        name: "movicloud",
+        palette: {
+            50: "#f0f5ff",
+            100: "#e0ebff",
+            200: "#c2d9ff",
+            300: "#99c2ff",
+            400: "#66a3ff",
+            500: "#508FFE",
+            600: "#2d5acc",
+            700: "#2447a3",
+            800: "#1c3880",
+            900: "#142a5c",
+            950: "#0c1a38",
+        },
+    },
+    {
         name: "emerald",
         palette: {
             50: "#ecfdf5",
@@ -151,22 +167,6 @@ const primaryColors = ref<Color[]>([
             800: "#075985",
             900: "#0c4a6e",
             950: "#082f49",
-        },
-    },
-    {
-        name: "blue",
-        palette: {
-            50: "#eff6ff",
-            100: "#dbeafe",
-            200: "#bfdbfe",
-            300: "#93c5fd",
-            400: "#60a5fa",
-            500: "#3b82f6",
-            600: "#2563eb",
-            700: "#1d4ed8",
-            800: "#1e40af",
-            900: "#1e3a8a",
-            950: "#172554",
         },
     },
     {
@@ -410,21 +410,18 @@ const surfaces = ref<Color[]>([
 export const useLayout = () => {
   const store = useLayoutStore()
 
-  // 初始化（仅在客户端）
   if (process.client) {
-    // 确保从localStorage恢复设置
     store.initializeFromStorage().then(() => {
-      // 初始化时应用保存的颜色
       const primaryColor = primaryColors.value.find(c => c.name === store.primary)
       const surfaceColor = surfaces.value.find(c => c.name === store.surface)
       
-      if (primaryColor) store.updateColors('primary', primaryColor)
-      if (surfaceColor) store.updateColors('surface', surfaceColor)
+      if (primaryColor || surfaceColor) {
+        store.applyColorsOnly(primaryColor, surfaceColor)
+      }
     })
   }
 
   return {
-    // 状态（通过computed保持响应性）
     sidebarCollapsed: computed(() => store.sidebarCollapsed),
     themeMode: computed(() => store.themeMode),
     primary: computed(() => store.primary),
@@ -435,7 +432,6 @@ export const useLayout = () => {
     bodyFont: computed(() => store.bodyFont),
     headingFont: computed(() => store.headingFont),
     
-    // 方法
     toggleSidebar: store.toggleSidebar,
     setSidebarCollapsed: store.setSidebarCollapsed,
     toggleDarkMode: store.toggleDarkMode,

@@ -1,16 +1,18 @@
 import { fileURLToPath } from 'node:url';
 import tailwindcss from '@tailwindcss/vite';
 
+const platform = process.env.NUXT_PUBLIC_PLATFORM || 'unknown'
+const outputDir = platform !== 'unknown' ? `dist/${platform}` : '.output'
+
 export default defineNuxtConfig({
   compatibilityDate: "2024-11-01",
   devtools: { enabled: true },
   
-  // 关闭 SSR，纯客户端渲染
   ssr: false,
 
   runtimeConfig: {
     public: {
-      platform: process.env.NUXT_PUBLIC_PLATFORM || 'unknown'
+      platform: platform
     }
   },
   
@@ -42,7 +44,9 @@ export default defineNuxtConfig({
   ],
   
   nitro: {
-    // 开发代理解决CORS问题
+    output: {
+      dir: outputDir
+    },
     devProxy: {
       '/movicloud-api': {
         target: 'https://api.movicloud.com',
@@ -50,11 +54,9 @@ export default defineNuxtConfig({
         secure: false,
       }
     },
-    // 服务器配置
     experimental: {
       wasm: true
     },
-    // 静态文件服务配置
     routeRules: {
       '/uploads/**': {
         headers: {
@@ -62,7 +64,6 @@ export default defineNuxtConfig({
         }
       }
     },
-    // 复制数据库相关文件到 .output 目录
     hooks: {
       'build:before': () => {
         if (process.env.NODE_ENV === 'development') {

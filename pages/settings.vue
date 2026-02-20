@@ -12,6 +12,7 @@ import { useDev } from '../composables/useDev';
 import { useSettingsCache } from '../composables/useSettingsCache';
 import { useRouter } from 'vue-router';
 import { useCloudDrives } from '../composables/useCloudDrives';
+import { useDemoMode } from '../composables/useDemoMode';
 
 const { themeMode, setThemeMode, primaryColors, surfaces, updateColors, bodyFont, headingFont, updateFonts } = useLayout();
 const { cloudDrives, getDriveByCode } = useCloudDrives();
@@ -19,6 +20,7 @@ const toast = useToast();
 const { log, error: devError } = useDev();
 const { clearCache: clearSettingsCache } = useSettingsCache();
 const router = useRouter();
+const { isDemoMode, checkDemoPermission } = useDemoMode();
 
 // 支持的语言列表
 const supportedLanguages = getSupportedLanguages()
@@ -31,6 +33,7 @@ const tabs = computed(() => {
   return [
     { id: 'theme', name: t('theme_settings'), icon: 'pi pi-palette' },
     { id: 'tmdb', name: 'TMDB API', icon: 'pi pi-database' },
+    { id: 'trimedia', name: t('trimedia_settings'), icon: 'pi pi-play-circle' },
     { id: 'cloud-drive', name: t('cloud_drive_settings'), icon: 'pi pi-cloud' },
     { id: 'language', name: t('language_settings'), icon: 'pi pi-globe' },
     { id: 'system', name: t('system_settings'), icon: 'pi pi-cog' },
@@ -49,6 +52,17 @@ const themeOptions = computed(() => {
     { label: t('theme_light'), value: 'light' as ThemeMode, icon: 'pi pi-sun' },
     { label: t('theme_dark'), value: 'dark' as ThemeMode, icon: 'pi pi-moon' },
     { label: t('theme_system'), value: 'system' as ThemeMode, icon: 'pi pi-desktop' }
+  ]
+});
+
+// 飞牛影视启用选项
+const trimediaEnabledOptions = computed(() => {
+  // 确保t函数可用
+  if (typeof t !== 'function') return []
+  
+  return [
+    { label: t('enabled'), value: true, icon: 'pi pi-check' },
+    { label: t('disabled'), value: false, icon: 'pi pi-times' }
   ]
 });
 
@@ -105,12 +119,11 @@ const settings = ref({
   tmdbApiKey: '',
   tmdbApiBaseUrl: 'https://api.tmdb.org',
   tmdbImageBaseUrl: 'https://image.tmdb.org',
-  // 代理相关字段保留但不在UI与接口中使用
-  proxyEnabled: false,
-  httpProxy: 'http://127.0.0.1:7890',
-  httpsProxy: 'http://127.0.0.1:7890',
-  allProxy: 'socks5://127.0.0.1:7890',
-  language: 'zh-CN'
+  language: 'zh-CN',
+  trimediaHost: '',
+  trimediaUsername: '',
+  trimediaPassword: '',
+  trimediaEnabled: false
 })
 
 const cloudDriveSettings = ref<CloudDriveSettings>({
@@ -132,6 +145,7 @@ const cloudDriveOptions = computed(() => [
 const loading = ref(false)
 const saving = ref(false)
 const testResult = ref<{ success: boolean; message: string } | null>(null)
+const trimediaTestResult = ref<{ success: boolean; message: string } | null>(null)
 const backupLoading = ref(false)
 const restoreLoading = ref(false)
 const restoreFileInput = ref<HTMLInputElement | null>(null)
@@ -153,31 +167,39 @@ const currentEditingAccount = ref<{
 const loadSettings = async () => {
   try {
     loading.value = true
-    const [tmdbResponse, languageResponse, cloudDriveResponse] = await Promise.all([
+    const [tmdbResponse, languageResponse, cloudDriveResponse, trimediaResponse] = await Promise.all([
       $fetch('/api/settings/tmdb'),
       $fetch('/api/settings/language'),
-      $fetch('/api/settings/cloud-drive')
+      $fetch('/api/settings/cloud-drive'),
+      $fetch('/api/settings/trimedia')
     ])
     
-    if (tmdbResponse.success && tmdbResponse.data) {
+    if (tmdbResponse.success && 'data' in tmdbResponse && tmdbResponse.data) {
       settings.value.tmdbApiKey = tmdbResponse.data.apiKey || ''
       settings.value.tmdbApiBaseUrl = tmdbResponse.data.apiBaseUrl || 'https://api.tmdb.org'
       settings.value.tmdbImageBaseUrl = tmdbResponse.data.imageBaseUrl || 'https://image.tmdb.org'
     }
     
-    if (languageResponse.success && languageResponse.data) {
+    if (languageResponse.success && 'data' in languageResponse && languageResponse.data) {
       settings.value.language = languageResponse.data.language || 'zh-CN'
       setLanguage(settings.value.language)
     }
     
-    if (cloudDriveResponse.success && cloudDriveResponse.data) {
+    if (cloudDriveResponse.success && 'data' in cloudDriveResponse && cloudDriveResponse.data) {
       cloudDriveSettings.value = {
-        quark: cloudDriveResponse.data.quark || [],
-        uc: cloudDriveResponse.data.uc || [],
-        cloud123: cloudDriveResponse.data.cloud123 || [],
-        cloud115: cloudDriveResponse.data.cloud115 || [],
-        xunlei: cloudDriveResponse.data.xunlei || []
+        quark: (cloudDriveResponse.data as CloudDriveSettings).quark || [],
+        uc: (cloudDriveResponse.data as CloudDriveSettings).uc || [],
+        cloud123: (cloudDriveResponse.data as CloudDriveSettings).cloud123 || [],
+        cloud115: (cloudDriveResponse.data as CloudDriveSettings).cloud115 || [],
+        xunlei: (cloudDriveResponse.data as CloudDriveSettings).xunlei || []
       }
+    }
+    
+    if (trimediaResponse.success && 'data' in trimediaResponse && trimediaResponse.data) {
+      settings.value.trimediaHost = trimediaResponse.data.host || ''
+      settings.value.trimediaUsername = trimediaResponse.data.username || ''
+      settings.value.trimediaPassword = trimediaResponse.data.password || ''
+      settings.value.trimediaEnabled = trimediaResponse.data.enabled || false
     }
   } catch (error) {
     devError('加载设置失败:', error)
@@ -189,13 +211,13 @@ const loadSettings = async () => {
 const loadCloudDriveSettings = async () => {
   try {
     const response = await $fetch('/api/settings/cloud-drive')
-    if (response.success && response.data) {
+    if (response.success && 'data' in response && response.data) {
       cloudDriveSettings.value = {
-        quark: response.data.quark || [],
-        uc: response.data.uc || [],
-        cloud123: response.data.cloud123 || [],
-        cloud115: response.data.cloud115 || [],
-        xunlei: response.data.xunlei || []
+        quark: (response.data as CloudDriveSettings).quark || [],
+        uc: (response.data as CloudDriveSettings).uc || [],
+        cloud123: (response.data as CloudDriveSettings).cloud123 || [],
+        cloud115: (response.data as CloudDriveSettings).cloud115 || [],
+        xunlei: (response.data as CloudDriveSettings).xunlei || []
       }
     }
   } catch (error) {
@@ -273,19 +295,11 @@ const openEditAccountDialog = (type: keyof CloudDriveSettings, index: number) =>
 }
 
 const saveAccountFromDialog = async () => {
+  if (!checkDemoPermission()) return
+  
   if (!currentEditingAccount.value.type) return
   
   const { type, index, account } = currentEditingAccount.value
-  
-  if (!account.name.trim()) {
-    toast.add({
-      severity: 'error',
-      summary: t('error'),
-      detail: '请输入账号名称',
-      life: 3000
-    })
-    return
-  }
   
   if (!account.cookie.trim()) {
     toast.add({
@@ -297,22 +311,69 @@ const saveAccountFromDialog = async () => {
     return
   }
   
-  const accounts = cloudDriveSettings.value[type]
-  if (Array.isArray(accounts)) {
-    if (accountDialogMode.value === 'add') {
-      accounts.push(account)
-    } else if (accountDialogMode.value === 'edit' && index !== null) {
-      accounts[index] = account
+  try {
+    saving.value = true
+    
+    const verifyApiPath = type === 'uc' 
+      ? '/api/cloud-drive/uc/verify-cookie'
+      : '/api/cloud-drive/quark/verify-cookie'
+    
+    const verifyResponse = await $fetch<{ success: boolean; message?: string; nickname?: string }>(verifyApiPath, {
+      method: 'POST',
+      body: {
+        cookies: account.cookie
+      }
+    })
+    
+    if (!verifyResponse.success) {
+      toast.add({
+        severity: 'error',
+        summary: t('error'),
+        detail: verifyResponse.message || 'Cookie验证失败',
+        life: 3000
+      })
+      return
     }
+    
+    if (!account.name.trim()) {
+      account.name = verifyResponse.nickname || '未命名账号'
+    }
+    
+    const accounts = cloudDriveSettings.value[type]
+    if (Array.isArray(accounts)) {
+      if (accountDialogMode.value === 'add') {
+        accounts.push(account)
+      } else if (accountDialogMode.value === 'edit' && index !== null) {
+        accounts[index] = account
+      }
+    }
+    
+    accountDialogVisible.value = false
+    
+    toast.add({
+      severity: 'success',
+      summary: t('success'),
+      detail: '账号验证成功',
+      life: 3000
+    })
+    
+    await saveCloudDriveSettings()
+  } catch (error: any) {
+    devError('验证Cookie失败:', error)
+    toast.add({
+      severity: 'error',
+      summary: t('error'),
+      detail: error.message || 'Cookie验证失败',
+      life: 3000
+    })
+  } finally {
+    saving.value = false
   }
-  
-  accountDialogVisible.value = false
-  
-  // 自动保存
-  await saveCloudDriveSettings()
 }
 
 const deleteCloudDriveAccount = async (type: keyof CloudDriveSettings, index: number) => {
+  if (!checkDemoPermission()) return
+  
   const accounts = cloudDriveSettings.value[type]
   if (Array.isArray(accounts)) {
     accounts.splice(index, 1)
@@ -324,6 +385,8 @@ const deleteCloudDriveAccount = async (type: keyof CloudDriveSettings, index: nu
 
 // 保存TMDB设置
 const saveTMDBSettings = async () => {
+  if (!checkDemoPermission()) return
+  
   try {
     saving.value = true
     
@@ -430,8 +493,81 @@ const testTMDB = async () => {
   }
 }
 
+const saveTrimeMediaSettings = async () => {
+  if (!checkDemoPermission()) return
+  
+  try {
+    saving.value = true
+    
+    await $fetch('/api/settings/trimedia', {
+      method: 'POST',
+      body: {
+        host: settings.value.trimediaHost,
+        username: settings.value.trimediaUsername,
+        password: settings.value.trimediaPassword,
+        enabled: settings.value.trimediaEnabled
+      }
+    })
+    
+    clearSettingsCache()
+    
+    toast.add({
+      severity: 'success',
+      summary: t('success'),
+      detail: t('save_trimedia_success'),
+      life: 3000
+    })
+  } catch (error) {
+    devError('保存飞牛影视设置失败:', error)
+    toast.add({
+      severity: 'error',
+      summary: t('error'),
+      detail: t('save_trimedia_failed'),
+      life: 3000
+    })
+  } finally {
+    saving.value = false
+  }
+}
+
+const testTrimeMedia = async () => {
+  try {
+    trimediaTestResult.value = null
+    
+    if (!settings.value.trimediaHost || !settings.value.trimediaUsername || !settings.value.trimediaPassword) {
+      trimediaTestResult.value = {
+        success: false,
+        message: t('please_fill_all_fields')
+      }
+      return
+    }
+    
+    const response = await $fetch('/api/trimedia/test-connection', {
+      method: 'POST',
+      body: {
+        host: settings.value.trimediaHost,
+        username: settings.value.trimediaUsername,
+        password: settings.value.trimediaPassword
+      }
+    })
+    
+    trimediaTestResult.value = {
+      success: response.success,
+      message: t(response.message)
+    }
+  } catch (error) {
+    devError('测试飞牛影视连接失败:', error)
+    trimediaTestResult.value = {
+      success: false,
+      message: t('trimedia_connection_failed')
+    }
+  }
+}
+
 // 备份数据库
 const handleBackup = async () => {
+  if (!checkDemoPermission()) return
+  
   try {
     backupLoading.value = true
     
@@ -471,6 +607,8 @@ const handleBackup = async () => {
 
 // 恢复数据库
 const handleRestore = async () => {
+  if (!checkDemoPermission()) return
+  
   try {
     restoreLoading.value = true
     
@@ -572,8 +710,8 @@ const fetchVersionInfo = async () => {
     } else {
       // 即使 success 为 false，也更新显示（至少显示当前版本）
       versionInfo.value = {
-        currentVersion: response.currentVersion || '1.0.4',
-        latestVersion: response.latestVersion || '1.0.4',
+        currentVersion: response.currentVersion || '1.0.5',
+        latestVersion: response.latestVersion || '1.0.5',
         updateAvailable: false,
         latestRelease: null
       }
@@ -582,8 +720,8 @@ const fetchVersionInfo = async () => {
     devError('获取版本信息失败:', error)
     // 出错时至少显示当前版本
     versionInfo.value = {
-      currentVersion: '1.0.4',
-      latestVersion: '1.0.4',
+      currentVersion: '1.0.5',
+      latestVersion: '1.0.5',
       updateAvailable: false,
       latestRelease: null
     }
@@ -677,7 +815,7 @@ useHead({
                 :multiple="false"
                 :allowEmpty="false"
                 :unselectable="false"
-                class="w-full max-w-md"
+                class="w-full"
               >
                 <template #option="slotProps">
                   <div class="flex items-center gap-2">
@@ -919,6 +1057,104 @@ useHead({
           </div>
         </div>
         
+        <!-- 飞牛影视设置选项卡 -->
+        <div v-if="activeTab === 'trimedia'" class="bg-surface-200 dark:bg-surface-800 rounded-lg shadow-sm p-6">
+          <h3 class="text-xl font-semibold text-surface-900 dark:text-surface-0 mb-6">{{ t('trimedia_settings') }}</h3>
+          
+          <div v-if="loading" class="text-center py-8">
+            <i class="pi pi-spin pi-spinner text-2xl text-primary-500"></i>
+            <p class="mt-2 text-surface-600 dark:text-surface-400">{{ t('loading_settings') }}</p>
+          </div>
+          
+          <div v-else class="space-y-6">
+            <!-- 启用开关 -->
+            <div class="mb-6">
+              <h4 class="font-medium text-surface-900 dark:text-surface-0 mb-4">{{ t('enable_trimedia') }}</h4>
+              <SelectButton
+                v-model="settings.trimediaEnabled"
+                :options="trimediaEnabledOptions"
+                optionLabel="label"
+                optionValue="value"
+                :multiple="false"
+                :allowEmpty="false"
+                :unselectable="false"
+                class="w-full"
+              >
+                <template #option="slotProps">
+                  <div class="flex items-center gap-2">
+                    <i :class="slotProps.option.icon" class="text-lg"></i>
+                    <span>{{ slotProps.option.label }}</span>
+                  </div>
+                </template>
+              </SelectButton>
+            </div>
+            
+            <div>
+              <label class="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-2">
+                {{ t('trimedia_host') }}
+              </label>
+              <InputText
+                v-model="settings.trimediaHost"
+                type="text"
+                :placeholder="t('trimedia_host_placeholder')"
+                class="w-full"
+              />
+              <p class="text-xs text-surface-500 mt-1">{{ t('trimedia_host_hint') }}</p>
+            </div>
+            
+            <div>
+              <label class="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-2">
+                {{ t('trimedia_username') }}
+              </label>
+              <InputText
+                v-model="settings.trimediaUsername"
+                type="text"
+                :placeholder="t('trimedia_username_placeholder')"
+                class="w-full"
+              />
+            </div>
+            
+            <div>
+              <label class="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-2">
+                {{ t('trimedia_password') }}
+              </label>
+              <InputText
+                v-model="settings.trimediaPassword"
+                type="password"
+                :placeholder="t('trimedia_password_placeholder')"
+                class="w-full"
+              />
+            </div>
+            
+            <div class="flex gap-3">
+              <button
+                @click="testTrimeMedia"
+                :disabled="!settings.trimediaHost || !settings.trimediaUsername || !settings.trimediaPassword"
+                class="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                {{ t('test_api_connection') }}
+              </button>
+              
+              <button
+                @click="saveTrimeMediaSettings"
+                :disabled="saving"
+                class="px-6 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                <i v-if="saving" class="pi pi-spin pi-spinner mr-2"></i>
+                {{ saving ? t('saving') : t('save_settings') }}
+              </button>
+            </div>
+            
+            <!-- 测试结果 -->
+            <div v-if="trimediaTestResult" class="p-4 rounded-lg" :class="trimediaTestResult.success ? 'bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400' : 'bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-400'">
+              <div class="flex items-center">
+                <i :class="trimediaTestResult.success ? 'pi pi-check-circle' : 'pi pi-exclamation-triangle'" class="mr-2"></i>
+                <span>{{ trimediaTestResult.message }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        
         <!-- 网盘设置选项卡 -->
         <div v-if="activeTab === 'cloud-drive'" class="bg-surface-200 dark:bg-surface-800 rounded-2xl shadow-lg p-6">
           <div class="flex justify-between items-start mb-8">
@@ -954,7 +1190,7 @@ useHead({
                 :multiple="false"
                 :allowEmpty="false"
                 :unselectable="false"
-                class="w-full max-w-md"
+                class="w-full"
               >
                 <template #option="slotProps">
                   <div class="flex items-center gap-2">

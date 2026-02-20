@@ -83,7 +83,14 @@ export const useAuth = () => {
   // 登录
   const login = async (username: string, password: string) => {
     try {
-      const response = await $fetch('/api/auth/login', {
+      const response = await $fetch<{
+        success: boolean
+        message: string
+        data?: {
+          user: User
+          token: string
+        }
+      }>('/api/auth/login', {
         method: 'POST',
         body: { username, password }
       })

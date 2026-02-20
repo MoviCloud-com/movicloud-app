@@ -1,4 +1,3 @@
-import { dbManager } from '../../database/database'
 import { devLog, devError } from '../../utils/dev'
 
 export default defineEventHandler(async (event) => {
@@ -12,8 +11,7 @@ export default defineEventHandler(async (event) => {
         message: 'API Key不能为空'
       }
     }
-
-    // 测试TMDB API连接
+    
     const baseUrl = inputBaseUrl || 'https://api.tmdb.org'
     const testUrl = `${baseUrl}/3`
     const testEndpoint = `${testUrl}/configuration?api_key=${apiKey}`
@@ -95,4 +93,4 @@ export default defineEventHandler(async (event) => {
       error: error.message
     }
   }
-}) 
+})

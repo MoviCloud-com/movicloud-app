@@ -7,21 +7,26 @@ import { t } from '../composables/useI18n'
 const router = useRouter()
 const route = useRoute()
 const layoutStore = useLayoutStore()
+const config = useRuntimeConfig()
 
-// 使用 Pinia store 的状态
 const sidebarCollapsed = computed(() => layoutStore.sidebarCollapsed)
 
-// 切换侧边栏 - 使用 store 的方法
 const toggleSidebar = () => {
   layoutStore.toggleSidebar()
 }
 
-// 侧边栏样式
 const sidebarStyle = computed(() => {
   return {
     width: sidebarCollapsed.value ? '80px' : '256px',
     transition: 'width 0.3s ease'
   }
+})
+
+const logoAreaClass = computed(() => {
+  const baseClass = 'flex-shrink-0 mac-drag'
+  const paddingClass = sidebarCollapsed.value ? 'p-3' : 'p-4'
+  const macClass = config.public.platform === 'macOS' ? 'mt-8' : ''
+  return [baseClass, paddingClass, macClass].filter(Boolean).join(' ')
 })
 
 // 菜单项定义 - 使用computed属性以支持多语言
@@ -65,18 +70,14 @@ const setActiveMenu = (menuId: string) => {
 
 <template>
   <div 
-    class="bg-surface-0 dark:bg-surface-900 border-r border-surface-200 dark:border-surface-700 flex flex-col flex-shrink-0 fixed left-0 top-0 z-50"
+    class="bg-surface-0 dark:bg-surface-900 border-r border-surface-200 dark:border-surface-700 flex flex-col flex-shrink-0 fixed left-0 top-0 z-50 mac-drag"
     style="height: 100vh;"
     :style="sidebarStyle"
   >
 
     <!-- Logo区域 -->
-    <div :class="[
-      'flex-shrink-0',
-      sidebarCollapsed ? 'p-3' : 'p-4'
-    ]">
-      <router-link 
-        to="/"
+    <div :class="logoAreaClass">
+      <div
         :class="[
           'flex items-center justify-center',
           sidebarCollapsed ? 'flex-col gap-2' : 'flex-row gap-3'
@@ -127,12 +128,12 @@ const setActiveMenu = (menuId: string) => {
             </g>
           </g>
         </svg>
-      </router-link>
+      </div>
     </div>
 
     <!-- 导航菜单 -->
     <nav :class="[
-      'flex-1',
+      'flex-1 mac-no-drag',
       sidebarCollapsed ? 'px-4 py-3' : 'px-4 py-2'
     ]">
       <!-- 展开状态：单列布局，图标和文字水平排列 -->
@@ -218,7 +219,7 @@ const setActiveMenu = (menuId: string) => {
 
     <!-- 折叠按钮 -->
     <div :class="[
-      'border-t border-surface-200 dark:border-surface-700 flex-shrink-0',
+      'border-t border-surface-200 dark:border-surface-700 flex-shrink-0 mac-no-drag',
     ]">
       <button
         @click="toggleSidebar"

@@ -1,4 +1,4 @@
-import { QuarkClient } from '~/server/utils/quark'
+import { QuarkClient } from '../../../utils/quark'
 
 export default defineEventHandler(async (event) => {
   try {

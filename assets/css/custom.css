@@ -69,3 +69,11 @@
 .p-dark {
     color-scheme: dark;
 }
+
+.mac-drag {
+    -webkit-app-region: drag;
+}
+
+.mac-no-drag {
+    -webkit-app-region: no-drag !important;
+}

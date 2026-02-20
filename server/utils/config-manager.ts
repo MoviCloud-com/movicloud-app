@@ -1,12 +1,8 @@
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'fs'
 import { join } from 'path'
-import bcrypt from 'bcrypt'
+import * as bcrypt from 'bcrypt'
 import { devLog, devError } from './dev'
-
-/**
- * .conf 配置文件管理器
- * 支持类似 qBittorrent 的配置文件格式
- */
+import { getDataDir } from './data-dir'
 
 interface ConfigSection {
   [key: string]: string | number | boolean | string[] | ConfigSection
@@ -21,17 +17,9 @@ export class ConfigManager {
   private config: ConfigData = {}
 
   constructor() {
-    const cwd = process.cwd()
-    // 配置文件路径：始终使用运行时工作目录的 data 文件夹
-    this.configPath = join(cwd, 'data', 'movicloud.conf')
-    
-    // 确保 data 目录存在
-    const dataDir = join(cwd, 'data')
-    if (!existsSync(dataDir)) {
-      mkdirSync(dataDir, { recursive: true })
-    }
-    
-    // 加载配置
+    const dataDir = getDataDir()
+    this.configPath = join(dataDir, 'movicloud.conf')
+  
     this.loadConfig()
   }
 
@@ -44,6 +32,8 @@ export class ConfigManager {
         const content = readFileSync(this.configPath, 'utf-8')
         this.config = this.parseConfig(content)
         devLog('✅ 配置文件加载成功:', this.configPath)
+        
+        this.migrateConfig()
       } catch (error) {
         devError('加载配置文件失败:', error)
         this.config = {}
@@ -53,6 +43,131 @@ export class ConfigManager {
       this.config = this.getDefaultConfig()
       this.saveConfig()
     }
+  }
+
+  /**
+   * 迁移配置文件（处理版本升级）
+   */
+  private migrateConfig(): void {
+    const currentVersion = this.get('Application', 'Version', '1.0.0') as string
+    const defaultConfig = this.getDefaultConfig()
+    const defaultVersion = defaultConfig.Application?.Version as string || '1.0.5'
+    
+    if (currentVersion === defaultVersion) {
+      return
+    }
+    
+    devLog(`🔄 检测到版本变更: ${currentVersion} -> ${defaultVersion}，开始迁移配置...`)
+    
+    if (this.compareVersions(currentVersion, '1.0.4') < 0) {
+      this.migrateFromLegacyVersion()
+    }
+    
+    this.mergeWithDefaultConfig(defaultConfig)
+    
+    this.set('Application', 'Version', defaultVersion)
+    this.saveConfig()
+    
+    devLog(`✅ 配置迁移完成，版本已更新为 ${defaultVersion}`)
+  }
+
+  /**
+   * 从旧版本（1.0.2/1.0.3）迁移配置
+   */
+  private migrateFromLegacyVersion(): void {
+    const settingsSection = this.config.Settings
+    if (!settingsSection) return
+    
+    const legacySettings = settingsSection as Record<string, any>
+    
+    if (legacySettings['Settings\\TMDB\\ApiKey']) {
+      const tmdbSection = this.config.Settings?.TMDB as ConfigSection | undefined
+      if (!tmdbSection?.ApiKey) {
+        this.set('Settings', 'TMDB\\ApiKey', legacySettings['Settings\\TMDB\\ApiKey'])
+      }
+      this.delete('Settings', 'Settings\\TMDB\\ApiKey')
+      devLog('  - 迁移 TMDB ApiKey')
+    }
+    
+    if (legacySettings['Settings\\TMDB\\ApiBaseUrl']) {
+      const tmdbSection = this.config.Settings?.TMDB as ConfigSection | undefined
+      if (!tmdbSection?.ApiBaseUrl) {
+        this.set('Settings', 'TMDB\\ApiBaseUrl', legacySettings['Settings\\TMDB\\ApiBaseUrl'])
+      }
+      this.delete('Settings', 'Settings\\TMDB\\ApiBaseUrl')
+    }
+    
+    if (legacySettings['Settings\\TMDB\\ImageBaseUrl']) {
+      const tmdbSection = this.config.Settings?.TMDB as ConfigSection | undefined
+      if (!tmdbSection?.ImageBaseUrl) {
+        this.set('Settings', 'TMDB\\ImageBaseUrl', legacySettings['Settings\\TMDB\\ImageBaseUrl'])
+      }
+      this.delete('Settings', 'Settings\\TMDB\\ImageBaseUrl')
+    }
+    
+    if (legacySettings['Settings\\System\\SystemId']) {
+      const systemSection = this.config.Settings?.System as ConfigSection | undefined
+      if (!systemSection?.SystemId) {
+        this.set('Settings', 'System\\SystemId', legacySettings['Settings\\System\\SystemId'])
+      }
+      this.delete('Settings', 'Settings\\System\\SystemId')
+      devLog('  - 迁移 SystemId')
+    }
+  }
+
+  /**
+   * 合并默认配置（补全新增字段）
+   */
+  private mergeWithDefaultConfig(defaultConfig: ConfigData): void {
+    if (!this.config.Application) {
+      this.config.Application = {}
+    }
+    for (const [key, value] of Object.entries(defaultConfig.Application || {})) {
+      if (this.config.Application[key] === undefined) {
+        this.config.Application[key] = value
+      }
+    }
+    
+    if (!this.config.Settings) {
+      this.config.Settings = {}
+    }
+    const defaultSettings = defaultConfig.Settings || {}
+    for (const [key, value] of Object.entries(defaultSettings)) {
+      if (this.config.Settings[key] === undefined) {
+        this.config.Settings[key] = value
+      } else if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
+        const currentSection = this.config.Settings[key] as ConfigSection
+        for (const [subKey, subValue] of Object.entries(value as ConfigSection)) {
+          if (currentSection[subKey] === undefined) {
+            currentSection[subKey] = subValue
+          }
+        }
+      }
+    }
+    
+    if (!this.config.Users) {
+      this.config.Users = defaultConfig.Users || {}
+    }
+  }
+
+  /**
+   * 比较版本号
+   */
+  private compareVersions(v1: string, v2: string): number {
+    const parts1 = v1.replace(/^v/, '').split('.').map(Number)
+    const parts2 = v2.replace(/^v/, '').split('.').map(Number)
+    
+    const maxLength = Math.max(parts1.length, parts2.length)
+    
+    for (let i = 0; i < maxLength; i++) {
+      const p1 = parts1[i] || 0
+      const p2 = parts2[i] || 0
+      
+      if (p1 > p2) return 1
+      if (p1 < p2) return -1
+    }
+    
+    return 0
   }
 
   /**
@@ -101,7 +216,7 @@ export class ConfigManager {
           value = ''
         } else if (value === '[object Object]') {
           // 处理错误的 [object Object] 字符串
-          value = {}
+          value = '{}'
         } else if (value.startsWith('[') || value.startsWith('{')) {
           // 尝试解析 JSON（处理数组和对象）
           try {
@@ -187,7 +302,7 @@ export class ConfigManager {
   private getDefaultConfig(): ConfigData {
     return {
       Application: {
-        Version: '1.0.4',
+        Version: '1.0.5',
         Installed: false,
         InstalledAt: '',
         MigrationVersion: 1
@@ -204,6 +319,13 @@ export class ConfigManager {
           ThemeMode: 'auto',
           Language: 'zh-CN'
         },
+        Theme: {
+          Mode: 'system',
+          Primary: 'movicloud',
+          Surface: 'zinc',
+          BodyFont: '"DingTalk-JinBuTi", system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "PingFang SC", "Noto Sans CJK SC", "Microsoft YaHei", sans-serif',
+          HeadingFont: '"AlimamaShuHeiTi-Bold", system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "PingFang SC", "Noto Sans CJK SC", "Microsoft YaHei", sans-serif'
+        },
         System: {
           SystemId: ''
         },
@@ -213,6 +335,12 @@ export class ConfigManager {
           cloud123: [],
           cloud115: [],
           xunlei: []
+        },
+        TrimeMedia: {
+          Host: '',
+          Username: '',
+          Password: '',
+          Enabled: false
         }
       },
       Users: {}
@@ -249,7 +377,7 @@ export class ConfigManager {
         value = value[k]
       } else {
         return defaultValue
-      }
+      } 
     }
     
     return value !== undefined ? value : defaultValue
@@ -552,8 +680,7 @@ export class ConfigManager {
   /**
    * 获取设置
    */
-  getSetting(key: string): string | null {
-    // 映射旧的 key 到新的配置路径
+  getSetting(key: string): string | null { 
     const keyMap: Record<string, string> = {
       'tmdb_api_key': 'TMDB\\ApiKey',
       'tmdb_api_base_url': 'TMDB\\ApiBaseUrl',
@@ -562,7 +689,16 @@ export class ConfigManager {
       'site_description': 'General\\SiteDescription',
       'theme_mode': 'General\\ThemeMode',
       'language': 'General\\Language',
-      'system_id': 'System\\SystemId'
+      'theme_mode_setting': 'Theme\\Mode',
+      'theme_primary': 'Theme\\Primary',
+      'theme_surface': 'Theme\\Surface',
+      'theme_body_font': 'Theme\\BodyFont',
+      'theme_heading_font': 'Theme\\HeadingFont',
+      'system_id': 'System\\SystemId',
+      'trimedia_host': 'TrimeMedia\\Host',
+      'trimedia_username': 'TrimeMedia\\Username',
+      'trimedia_password': 'TrimeMedia\\Password',
+      'trimedia_enabled': 'TrimeMedia\\Enabled'
     }
     
     const configKey = keyMap[key] || key
@@ -587,7 +723,16 @@ export class ConfigManager {
       'site_description': 'General\\SiteDescription',
       'theme_mode': 'General\\ThemeMode',
       'language': 'General\\Language',
-      'system_id': 'System\\SystemId'
+      'theme_mode_setting': 'Theme\\Mode',
+      'theme_primary': 'Theme\\Primary',
+      'theme_surface': 'Theme\\Surface',
+      'theme_body_font': 'Theme\\BodyFont',
+      'theme_heading_font': 'Theme\\HeadingFont',
+      'system_id': 'System\\SystemId',
+      'trimedia_host': 'TrimeMedia\\Host',
+      'trimedia_username': 'TrimeMedia\\Username',
+      'trimedia_password': 'TrimeMedia\\Password',
+      'trimedia_enabled': 'TrimeMedia\\Enabled'
     }
     
     const configKey = keyMap[key] || key
@@ -603,15 +748,16 @@ export class ConfigManager {
     const reverseKeyMap: Record<string, string> = {
       'TMDB\\ApiKey': 'tmdb_api_key',
       'TMDB\\ApiBaseUrl': 'tmdb_api_base_url',
-      'TMDB\\ImageBaseUrl': 'tmdb_image_base_url',
-      'Proxy\\Enabled': 'proxy_enabled',
-      'Proxy\\HttpProxy': 'http_proxy',
-      'Proxy\\HttpsProxy': 'https_proxy',
-      'Proxy\\AllProxy': 'all_proxy',
+      'TMDB\\ImageBaseUrl': 'tmdb_image_base_url', 
       'General\\SiteName': 'site_name',
       'General\\SiteDescription': 'site_description',
       'General\\ThemeMode': 'theme_mode',
       'General\\Language': 'language',
+      'Theme\\Mode': 'theme_mode_setting',
+      'Theme\\Primary': 'theme_primary',
+      'Theme\\Surface': 'theme_surface',
+      'Theme\\BodyFont': 'theme_body_font',
+      'Theme\\HeadingFont': 'theme_heading_font',
       'System\\SystemId': 'system_id'
     }
     
@@ -640,7 +786,7 @@ export class ConfigManager {
 
   getCloudDriveSettings(): any {
     const settingsSection = this.getSection('Settings')
-    let cloudDriveSettings = {
+    const cloudDriveSettings: Record<string, any[]> = {
       quark: [],
       uc: [],
       cloud123: [],
@@ -649,23 +795,21 @@ export class ConfigManager {
     }
     
     if (settingsSection && settingsSection.CloudDrive) {
-      const rawSettings = settingsSection.CloudDrive
+      const rawSettings = settingsSection.CloudDrive as Record<string, any>
       
-      // 确保每个属性都是数组
-      for (const key of ['quark', 'uc', 'cloud123', 'cloud115', 'xunlei']) {
+      for (const key of Object.keys(cloudDriveSettings)) {
         if (rawSettings[key]) {
-          // 如果是字符串，尝试解析为 JSON
           if (typeof rawSettings[key] === 'string') {
             try {
               const parsed = JSON.parse(rawSettings[key])
-              cloudDriveSettings[key as keyof typeof cloudDriveSettings] = Array.isArray(parsed) ? parsed : []
+              cloudDriveSettings[key] = Array.isArray(parsed) ? parsed : []
             } catch {
-              cloudDriveSettings[key as keyof typeof cloudDriveSettings] = []
+              cloudDriveSettings[key] = []
             }
           } else if (Array.isArray(rawSettings[key])) {
-            cloudDriveSettings[key as keyof typeof cloudDriveSettings] = rawSettings[key]
+            cloudDriveSettings[key] = rawSettings[key]
           } else {
-            cloudDriveSettings[key as keyof typeof cloudDriveSettings] = []
+            cloudDriveSettings[key] = []
           }
         }
       }
@@ -695,7 +839,7 @@ export class ConfigManager {
   completeInstallation(): void {
     this.set('Application', 'Installed', true)
     this.set('Application', 'InstalledAt', new Date().toISOString())
-    this.set('Application', 'Version', '1.0.4')
+    this.set('Application', 'Version', '1.0.5')
     devLog('✅ 安装完成')
   }
 

@@ -7,10 +7,16 @@ import type {
   TMDBConfig 
 } from '../types'
 
+interface TMDBConfigResponse {
+  success: boolean
+  data?: TMDBConfig
+  message?: string
+}
+
 // 获取TMDB配置
 const getTMDBConfig = async (): Promise<TMDBConfig> => {
-  const response = await $fetch('/api/settings/tmdb')
-  if (!response.success) throw new Error('获取TMDB配置失败')
+  const response = await $fetch<TMDBConfigResponse>('/api/settings/tmdb')
+  if (!response.success || !response.data) throw new Error('获取TMDB配置失败')
   
   return response.data
 }

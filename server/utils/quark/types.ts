@@ -3,6 +3,7 @@ export const DRIVE_DOMAIN = 'https://drive-pc.quark.cn'
 export const DRIVE_H_DOMAIN = 'https://drive-h.quark.cn'
 
 export const USER_INFO = '/account/info'
+export const USER_LOGIN_METHOD_INFO = '/account/user_login_method_info'
 export const FILE_UPLOAD_PRE = '/1/clouddrive/file/upload/pre'
 export const FILE_UPDATE_HASH = '/1/clouddrive/file/update/hash'
 export const FILE_UPLOAD_AUTH = '/1/clouddrive/file/upload/auth'

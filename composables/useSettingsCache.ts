@@ -76,7 +76,15 @@ const clearCache = () => {
 // 获取TMDB设置
 const fetchTMDBSettings = async () => {
   try {
-    const response = await $fetch('/api/settings/tmdb')
+    const response = await $fetch<{
+      success: boolean
+      data?: {
+        apiKey: string
+        apiBaseUrl: string
+        imageBaseUrl: string
+      }
+      message?: string
+    }>('/api/settings/tmdb')
     if (response.success && response.data) {
       return response.data
     }
@@ -96,13 +104,19 @@ const fetchTMDBSettings = async () => {
 const fetchGeneralSettings = async () => {
   try {
     const [languageRes, themeRes] = await Promise.all([
-      $fetch('/api/settings/language'),
-      $fetch('/api/settings/theme')
+      $fetch<{
+        success: boolean
+        data: { language: string }
+      }>('/api/settings/language'),
+      $fetch<{
+        success: boolean
+        data: { theme: string }
+      }>('/api/settings/theme')
     ])
     
     return {
-      language: languageRes.success && languageRes.data ? languageRes.data : 'zh-CN',
-      theme: themeRes.success && themeRes.data ? themeRes.data : 'light'
+      language: languageRes.success && languageRes.data ? languageRes.data.language : 'zh-CN',
+      theme: themeRes.success && themeRes.data ? themeRes.data.theme : 'light'
     }
   } catch (error) {
     console.error('获取通用设置失败:', error)

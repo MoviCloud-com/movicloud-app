@@ -62,7 +62,7 @@ export const settings = {
   
   // Cloud Drive settings
   cloud_drive_settings: 'Cloud Drive Settings',
-  cloud_drive_settings_subtitle: 'Configure your cloud drive account information',
+  cloud_drive_settings_subtitle: 'Configure your cloud drive account information, will not store your account password on MoviCloud server, only locally stored and used',
   quark_cloud_drive: 'Quark Cloud Drive',
   uc_cloud_drive: 'UC Cloud Drive',
   cloud_123: '123 Cloud Drive',
@@ -77,4 +77,20 @@ export const settings = {
   save_cloud_drive_settings: 'Save Cloud Drive Settings',
   save_cloud_drive_success: 'Cloud drive settings saved successfully',
   save_cloud_drive_failed: 'Failed to save cloud drive settings, please try again',
+  
+  // TrimeMedia settings
+  trimedia_settings: 'TrimeMedia',
+  enable_trimedia: 'Enable TrimeMedia',
+  trimedia_host: 'Server Address',
+  trimedia_host_placeholder: 'e.g. http://192.168.1.100:5666/v',
+  trimedia_host_hint: 'Enter the TrimeMedia server address',
+  trimedia_username: 'Username',
+  trimedia_username_placeholder: 'Enter username',
+  trimedia_password: 'Password',
+  trimedia_password_placeholder: 'Enter password',
+  save_trimedia_success: 'TrimeMedia settings saved successfully',
+  save_trimedia_failed: 'Failed to save TrimeMedia settings, please try again',
+  trimedia_connection_success: 'TrimeMedia connection successful',
+  trimedia_connection_failed: 'TrimeMedia connection failed, please check configuration',
+  please_fill_all_fields: 'Please fill in all required fields',
 } 

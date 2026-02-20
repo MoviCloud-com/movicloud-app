@@ -1,18 +1,9 @@
-import { QuarkClient } from '~/server/utils/quark'
+import { QuarkClient } from '../../../utils/quark'
 
 export default defineEventHandler(async (event) => {
   try {
     const body = await readBody(event)
-    const { 
-      cookies, 
-      pwdID, 
-      stoken, 
-      pdirFid = '0', 
-      page = 1, 
-      size = 50, 
-      sortBy = 'file_name', 
-      sortOrder = 'asc' 
-    } = body
+    const { cookies, pwdID, stoken, pdirFid = '0', page = 1, size = 100 } = body
 
     if (!cookies || !pwdID || !stoken) {
       throw createError({
@@ -22,7 +13,7 @@ export default defineEventHandler(async (event) => {
     }
 
     const client = new QuarkClient({ cookies })
-    const result = await client.getShareList(pwdID, stoken, pdirFid, page, size, sortBy, sortOrder)
+    const result = await client.getShareList(pwdID, stoken, pdirFid, page, size)
 
     return {
       success: true,

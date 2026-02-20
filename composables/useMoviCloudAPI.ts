@@ -3,7 +3,7 @@ import { useDev } from './useDev'
 
 // MoviCloud API 服务
 const API_BASE_URL = import.meta.dev ? 'http://localhost:8000' : 'https://api.movicloud.com'
-const CLIENT_VERSION = '1.0.4'
+const CLIENT_VERSION = '1.0.5'
 
 // 缓存的系统ID
 let cachedSystemId: string | null = null

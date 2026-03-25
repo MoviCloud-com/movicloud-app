@@ -26,7 +26,8 @@ const logoAreaClass = computed(() => {
   const baseClass = 'flex-shrink-0 mac-drag'
   const paddingClass = sidebarCollapsed.value ? 'p-3' : 'p-4'
   const macClass = config.public.platform === 'macOS' ? 'mt-8' : ''
-  return [baseClass, paddingClass, macClass].filter(Boolean).join(' ')
+  const fnOSClass = config.public.platform === 'fnOS' ? '!pt-0 !pb-3' : ''
+  return [baseClass, paddingClass, macClass, fnOSClass].filter(Boolean).join(' ')
 })
 
 // 菜单项定义 - 使用computed属性以支持多语言
@@ -70,7 +71,8 @@ const setActiveMenu = (menuId: string) => {
 
 <template>
   <div 
-    class="bg-surface-0 dark:bg-surface-900 border-r border-surface-200 dark:border-surface-700 flex flex-col flex-shrink-0 fixed left-0 top-0 z-50 mac-drag"
+    class="flex flex-col flex-shrink-0 fixed left-0 top-0 z-50 mac-drag"
+    :class="config.public.platform === 'fnOS' ? 'bg-fnOS' : 'border-r border-surface-200 dark:border-surface-700 bg-surface-0 dark:bg-surface-900'"
     style="height: 100vh;"
     :style="sidebarStyle"
   >

@@ -104,7 +104,9 @@ const handleSurfaceChange = (colorName: string): void => {
 interface CloudDriveAccount {
   id: string
   name: string
-  cookie: string
+  cookie?: string
+  refreshToken?: string
+  captchaUserId?: string
 }
 
 interface CloudDriveSettings {
@@ -139,7 +141,8 @@ const activeCloudDriveTab = ref('quark')
 // 网盘选项
 const cloudDriveOptions = computed(() => [
   { label: t('quark_cloud_drive'), value: 'quark' },
-  { label: t('uc_cloud_drive'), value: 'uc' }
+  { label: t('uc_cloud_drive'), value: 'uc' },
+  { label: t('xunlei_cloud_drive'), value: 'xunlei' }
 ])
 
 const loading = ref(false)
@@ -301,35 +304,72 @@ const saveAccountFromDialog = async () => {
   
   const { type, index, account } = currentEditingAccount.value
   
-  if (!account.cookie.trim()) {
-    toast.add({
-      severity: 'error',
-      summary: t('error'),
-      detail: '请输入Cookie',
-      life: 3000
-    })
-    return
+  // 根据网盘类型验证不同的字段
+  if (type === 'xunlei') {
+    if (!account.refreshToken?.trim()) {
+      toast.add({
+        severity: 'error',
+        summary: t('error'),
+        detail: '请输入刷新Token',
+        life: 3000
+      })
+      return
+    }
+    
+    if (!account.captchaUserId?.trim()) {
+      toast.add({
+        severity: 'error',
+        summary: t('error'),
+        detail: '请输入用户ID',
+        life: 3000
+      })
+      return
+    }
+  } else {
+    if (!account.cookie?.trim()) {
+      toast.add({
+        severity: 'error',
+        summary: t('error'),
+        detail: '请输入Cookie',
+        life: 3000
+      })
+      return
+    }
   }
   
   try {
     saving.value = true
     
-    const verifyApiPath = type === 'uc' 
-      ? '/api/cloud-drive/uc/verify-cookie'
-      : '/api/cloud-drive/quark/verify-cookie'
+    let verifyResponse: { success: boolean; message?: string; nickname?: string }
     
-    const verifyResponse = await $fetch<{ success: boolean; message?: string; nickname?: string }>(verifyApiPath, {
-      method: 'POST',
-      body: {
-        cookies: account.cookie
-      }
-    })
+    if (type === 'xunlei') {
+      // 迅雷网盘验证
+      verifyResponse = await $fetch<{ success: boolean; message?: string; nickname?: string }>('/api/cloud-drive/thunder/verify-config', {
+        method: 'POST',
+        body: {
+          refreshToken: account.refreshToken,
+          captchaUserId: account.captchaUserId
+        }
+      })
+    } else {
+      // 其他网盘验证
+      const verifyApiPath = type === 'uc' 
+        ? '/api/cloud-drive/uc/verify-cookie'
+        : '/api/cloud-drive/quark/verify-cookie'
+      
+      verifyResponse = await $fetch<{ success: boolean; message?: string; nickname?: string }>(verifyApiPath, {
+        method: 'POST',
+        body: {
+          cookies: account.cookie
+        }
+      })
+    }
     
     if (!verifyResponse.success) {
       toast.add({
         severity: 'error',
         summary: t('error'),
-        detail: verifyResponse.message || 'Cookie验证失败',
+        detail: verifyResponse.message || (type === 'xunlei' ? '配置验证失败' : 'Cookie验证失败'),
         life: 3000
       })
       return
@@ -1299,6 +1339,53 @@ useHead({
               </div>
             </div>
             
+            <!-- 迅雷网盘设置 -->
+            <div v-else-if="activeCloudDriveTab === 'xunlei'" class="space-y-4">
+              
+              <div v-if="!cloudDriveSettings.xunlei || cloudDriveSettings.xunlei.length === 0" class="text-center py-16">
+                <div class="w-24 h-24 rounded-2xl bg-surface-100 dark:bg-surface-700/30 flex items-center justify-center mx-auto mb-6">
+                  <i class="pi pi-cloud text-5xl text-surface-400 dark:text-surface-500"></i>
+                </div>
+                <h4 class="text-lg font-medium text-surface-700 dark:text-surface-300 mb-2">还没有账号</h4>
+                <p class="text-surface-500 dark:text-surface-400 mb-6">点击上方按钮添加您的第一个账号</p>
+              </div>
+              
+              <div v-else class="space-y-4">
+                <div
+                  v-for="(account, index) in (cloudDriveSettings.xunlei || [])"
+                  :key="account.id"
+                  class="group bg-surface-50 dark:bg-surface-700/50 rounded-2xl p-5 hover:bg-surface-100 dark:hover:bg-surface-700 transition-all duration-200"
+                >
+                  <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-4">
+                      <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-400 to-pink-500 flex items-center justify-center">
+                        <i class="pi pi-user text-white text-2xl"></i>
+                      </div>
+                      <div>
+                        <h5 class="font-semibold text-lg text-surface-900 dark:text-surface-0">{{ account.name || '未命名账号' }}</h5>
+                      </div>
+                    </div>
+                    <div class="flex items-center gap-2">
+                      <button
+                        @click="openEditAccountDialog('xunlei', index)"
+                        class="w-10 h-10 rounded-xl flex items-center justify-center text-surface-500 dark:text-surface-400 hover:text-primary-500 dark:hover:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-all duration-200"
+                        :title="t('edit')"
+                      >
+                        <i class="pi pi-pencil text-lg"></i>
+                      </button>
+                      <button
+                        @click="deleteCloudDriveAccount('xunlei', index)"
+                        class="w-10 h-10 rounded-xl flex items-center justify-center text-surface-500 dark:text-surface-400 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all duration-200"
+                        :title="t('delete_cloud_account')"
+                      >
+                        <i class="pi pi-trash text-lg"></i>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
 
           </div>
         </div>
@@ -1614,16 +1701,48 @@ useHead({
           />
         </div>
         
-        <div>
-          <label class="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-2">
-            Cookie
-          </label>
-          <textarea
-            v-model="currentEditingAccount.account.cookie"
-            placeholder="请粘贴Cookie内容"
-            class="w-full h-40 p-3 border border-surface-300 dark:border-surface-600 rounded-lg bg-surface-0 dark:bg-surface-800 text-surface-900 dark:text-surface-0 resize-none"
-          ></textarea>
-        </div>
+        <!-- 迅雷网盘特殊字段 -->
+        <template v-if="currentEditingAccount.type === 'xunlei'">
+          <div>
+            <label class="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-2">
+              刷新Token
+            </label>
+            <InputText
+              v-model="currentEditingAccount.account.refreshToken"
+              type="text"
+              placeholder="请输入刷新Token"
+              class="w-full"
+              autocomplete="off"
+            />
+          </div>
+          
+          <div>
+            <label class="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-2">
+              用户ID
+            </label>
+            <InputText
+              v-model="currentEditingAccount.account.captchaUserId"
+              type="text"
+              placeholder="请输入用户ID"
+              class="w-full"
+              autocomplete="off"
+            />
+          </div>
+        </template>
+        
+        <!-- 其他网盘的Cookie字段 -->
+        <template v-else>
+          <div>
+            <label class="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-2">
+              Cookie
+            </label>
+            <textarea
+              v-model="currentEditingAccount.account.cookie"
+              placeholder="请粘贴Cookie内容"
+              class="w-full h-40 p-3 border border-surface-300 dark:border-surface-600 rounded-lg bg-surface-0 dark:bg-surface-800 text-surface-900 dark:text-surface-0 resize-none"
+            ></textarea>
+          </div>
+        </template>
       </div>
       
       <template #footer>

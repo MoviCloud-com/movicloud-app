@@ -6,7 +6,7 @@
       borderClasses
     ]"
   >
-    <div class="flex items-center justify-between px-6 py-4">
+    <div class="flex items-center justify-between transition-all duration-500" :class="config.public.platform === 'fnOS' && isScrolled ? 'py-1 px-1' : 'py-4 px-6'">
       <!-- 左侧内容 -->
       <div class="flex items-center space-x-4">
         <slot name="left">
@@ -181,6 +181,7 @@ const { userEventBus } = useUserEvents()
 // 状态
 const showUserMenu = ref(false)
 const currentUser = ref<User | null>(null)
+const config = useRuntimeConfig()
 
 // 刷新用户数据
 const refreshUserData = () => {
@@ -190,9 +191,15 @@ const refreshUserData = () => {
 // 计算属性
 const backgroundClasses = computed(() => {
   if (props.backgroundType === 'solid') {
+    if (config.public.platform === 'fnOS') {
+      return 'bg-fnOS'
+    }
     return 'bg-surface-0/95 dark:bg-surface-950/95 backdrop-blur-lg shadow-sm'
   }
   if (props.isScrolled) {
+    if (config.public.platform === 'fnOS') {
+      return 'bg-fnOS'
+    }
     return 'bg-surface-0/95 dark:bg-surface-950/95 backdrop-blur-lg shadow-sm'
   }
   return 'bg-transparent'

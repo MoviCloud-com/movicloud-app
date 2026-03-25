@@ -452,6 +452,7 @@ export const common = {
   'submitted': '已提交',
   'approved': '已通过',
   'rejected': '已拒绝',
+  'rejected_reason': '被拒绝原因',
   'pending_desc': '用户提交申请成功，等待管理员审核',
   'submitted_desc': '管理员将申请提交到网盘方审核',
   'approved_desc': '网盘方审核通过，可用于数据查询',
@@ -491,6 +492,7 @@ export const common = {
   // Cloud 页面
   'cloud_drive_title': '我的网盘',
   'cloud_drive_subtitle': '管理您的网盘账号和文件',
+  'thunder_cloud_drive': '迅雷网盘',
   'select_account': '选择账号',
   'no_cloud_accounts': '还没有配置网盘账号',
   'go_to_settings': '前往设置',

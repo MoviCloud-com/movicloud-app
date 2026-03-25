@@ -407,6 +407,7 @@ export const common = {
   'reviewer': 'Reviewer',
   'reviewed_at': 'Reviewed At',
   'reject_reason': 'Reject Reason',
+  'rejected_reason': 'Rejected Reason',
   'created_at': 'Created At',
   'no_applications': 'You have not submitted any applications',
   'apply_now': 'Apply Now',
@@ -491,6 +492,7 @@ export const common = {
   // Cloud Page
   'cloud_drive_title': 'My Cloud Drive',
   'cloud_drive_subtitle': 'Manage your cloud drive accounts and files',
+  'thunder_cloud_drive': 'Thunder Cloud Drive',
   'select_account': 'Select Account',
   'no_cloud_accounts': 'No cloud drive accounts configured yet',
   'go_to_settings': 'Go to Settings',

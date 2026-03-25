@@ -267,6 +267,9 @@ onUnmounted(() => {
                 <div class="w-px h-3 bg-surface-300 dark:bg-surface-700 mx-1"></div>
                 <div class="truncate flex-1">{{ item.driveLink }}</div>
               </div>
+              <div v-if="item.status === 'rejected' && item.reviewNote" class="mt-2 p-2 bg-red-50 dark:bg-red-900/20 rounded text-xs text-red-500 dark:text-red-400 truncate" :title="item.reviewNote">
+                  {{ t('rejected_reason') }}: {{ item.reviewNote }}
+              </div>
             </div>
           </div>
           <!-- Load More Status -->

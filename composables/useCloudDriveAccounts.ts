@@ -4,7 +4,9 @@ export interface CloudDriveAccountInfo {
   driveCode: string
   name: string
   logo: string
-  cookie: string
+  cookie?: string
+  refreshToken?: string
+  captchaUserId?: string
   isValid: boolean
   nickname?: string
   avatar?: string
@@ -23,6 +25,10 @@ export const useCloudDriveAccounts = () => {
     accounts.value.filter(acc => acc.driveCode === 'uc')
   )
 
+  const thunderAccounts = computed(() => 
+    accounts.value.filter(acc => acc.driveCode === 'thunder')
+  )
+
   const hasValidQuarkAccount = computed(() => 
     quarkAccounts.value.some(acc => acc.isValid)
   )
@@ -31,8 +37,12 @@ export const useCloudDriveAccounts = () => {
     ucAccounts.value.some(acc => acc.isValid)
   )
 
+  const hasValidThunderAccount = computed(() => 
+    thunderAccounts.value.some(acc => acc.isValid)
+  )
+
   const hasValidAccount = computed(() => 
-    hasValidQuarkAccount.value || hasValidUCAccount.value
+    hasValidQuarkAccount.value || hasValidUCAccount.value || hasValidThunderAccount.value
   )
 
   const loadAccounts = async () => {
@@ -73,6 +83,21 @@ export const useCloudDriveAccounts = () => {
           }
         }
 
+        if (response.data.xunlei && Array.isArray(response.data.xunlei)) {
+          for (const acc of response.data.xunlei) {
+            accountList.push({
+              driveCode: 'thunder',
+              name: '迅雷网盘',
+              logo: '/images/cloud-drives/xunlei.png',
+              refreshToken: acc.refreshToken || '',
+              captchaUserId: acc.captchaUserId || '',
+              isValid: false,
+              nickname: acc.nickname,
+              avatar: acc.avatar
+            })
+          }
+        }
+
         accounts.value = accountList
 
         await verifyAllAccounts()
@@ -88,15 +113,27 @@ export const useCloudDriveAccounts = () => {
   const verifyAllAccounts = async () => {
     const verifyPromises = accounts.value.map(async (account) => {
       try {
-        const apiPath = account.driveCode === 'uc'
-          ? '/api/cloud-drive/uc/verify-cookie'
-          : '/api/cloud-drive/quark/verify-cookie'
+        let apiPath: string
+        let body: any
+
+        if (account.driveCode === 'thunder') {
+          apiPath = '/api/cloud-drive/thunder/verify-config'
+          body = {
+            refreshToken: account.refreshToken,
+            captchaUserId: account.captchaUserId
+          }
+        } else {
+          apiPath = account.driveCode === 'uc'
+            ? '/api/cloud-drive/uc/verify-cookie'
+            : '/api/cloud-drive/quark/verify-cookie'
+          body = {
+            cookies: account.cookie
+          }
+        }
 
         const response = await $fetch<{ success: boolean; valid?: boolean }>(apiPath, {
           method: 'POST',
-          body: {
-            cookies: account.cookie
-          }
+          body
         })
 
         account.isValid = response.success === true
@@ -121,8 +158,10 @@ export const useCloudDriveAccounts = () => {
     accounts,
     quarkAccounts,
     ucAccounts,
+    thunderAccounts,
     hasValidQuarkAccount,
     hasValidUCAccount,
+    hasValidThunderAccount,
     hasValidAccount,
     loading,
     error,

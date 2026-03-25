@@ -100,7 +100,7 @@ onUnmounted(() => {
             </div>
             
             <!-- 主要内容 -->
-            <main class="-mt-18 bg-surface-50 dark:bg-surface-950">
+            <main class="-mt-18 bg-surface-50 dark:bg-surface-950 rounded-2xl">
                 <slot></slot>
             </main>
         </div>

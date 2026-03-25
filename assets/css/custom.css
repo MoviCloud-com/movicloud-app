@@ -77,3 +77,11 @@
 .mac-no-drag {
     -webkit-app-region: no-drag !important;
 }
+
+.bg-fnOS {
+  background-color: #F2F3F4 !important;
+}
+
+.p-dark .bg-fnOS {
+  background-color: #0C0C0D !important;
+}

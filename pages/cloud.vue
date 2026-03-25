@@ -40,7 +40,7 @@ interface CloudDriveSettings {
   uc: Array<{ id: string; name: string; cookie: string }>
   cloud123: Array<{ id: string; name: string; cookie: string }>
   cloud115: Array<{ id: string; name: string; cookie: string }>
-  xunlei: Array<{ id: string; name: string; cookie: string }>
+  xunlei: Array<{ id: string; name: string; refreshToken?: string; captchaUserId?: string }>
 }
 
 const cloudDriveSettings = ref<CloudDriveSettings>({
@@ -72,6 +72,13 @@ const allAccounts = computed<CloudDriveAccount[]>(() => {
     accounts.push({
       ...account,
       driveCode: 'uc'
+    })
+  })
+  
+  cloudDriveSettings.value.xunlei.forEach(account => {
+    accounts.push({
+      ...account,
+      driveCode: 'xunlei'
     })
   })
   
@@ -117,7 +124,7 @@ const enterAccount = async (account: CloudDriveAccount) => {
   if (result.success && result.data) {
     userInfo.value = {
       nickname: result.data.nickname || result.data.name,
-      avatar: result.data.avatarUri || result.data.avatar || result.data.headImg
+      avatar: result.data.avatarUri || result.data.avatar || result.data.headImg || result.data.picture
     }
   }
   

@@ -2,6 +2,7 @@
 import { ref, computed, watch } from 'vue'
 import { t } from '../composables/useI18n'
 import { useConfirm } from 'primevue/useconfirm'
+import { useCloudDrives } from '../composables/useCloudDrives'
 import Menu from '../volt/Menu.vue'
 import Dialog from '../volt/Dialog.vue'
 import ConfirmDialog from '../volt/ConfirmDialog.vue'
@@ -42,6 +43,7 @@ interface Emits {
 const props = defineProps<Props>()
 const emit = defineEmits<Emits>()
 const confirm = useConfirm()
+const { getDriveByCode } = useCloudDrives()
 
 const selectedFiles = ref<CloudFile[]>([])
 const searchQuery = ref('')
@@ -398,7 +400,7 @@ const handleCopyFolderSelect = (fid: string, name: string) => {
             </div>
             <div class="flex-1">
               <div class="font-semibold text-sm text-surface-900 dark:text-surface-0">{{ userInfo.nickname || t('cloud_user') }}</div>
-              <div class="text-xs text-surface-600 dark:text-surface-400">{{ account.driveCode === 'quark' ? '夸克网盘' : 'UC网盘' }}</div>
+              <div class="text-xs text-surface-600 dark:text-surface-400">{{ getDriveByCode(account.driveCode)?.name || account.driveCode }}</div>
             </div>
           </div>
         </div>

@@ -334,7 +334,8 @@ export class ConfigManager {
           uc: [],
           cloud123: [],
           cloud115: [],
-          xunlei: []
+          xunlei: [],
+          thunder: []
         },
         TrimeMedia: {
           Host: '',
@@ -791,7 +792,8 @@ export class ConfigManager {
       uc: [],
       cloud123: [],
       cloud115: [],
-      xunlei: []
+      xunlei: [],
+      thunder: []
     }
     
     if (settingsSection && settingsSection.CloudDrive) {

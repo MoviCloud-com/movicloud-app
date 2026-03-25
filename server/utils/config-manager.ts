@@ -51,7 +51,7 @@ export class ConfigManager {
   private migrateConfig(): void {
     const currentVersion = this.get('Application', 'Version', '1.0.0') as string
     const defaultConfig = this.getDefaultConfig()
-    const defaultVersion = defaultConfig.Application?.Version as string || '1.0.5'
+    const defaultVersion = defaultConfig.Application?.Version as string || '1.0.6'
     
     if (currentVersion === defaultVersion) {
       return
@@ -302,7 +302,7 @@ export class ConfigManager {
   private getDefaultConfig(): ConfigData {
     return {
       Application: {
-        Version: '1.0.5',
+        Version: '1.0.6',
         Installed: false,
         InstalledAt: '',
         MigrationVersion: 1
@@ -841,7 +841,7 @@ export class ConfigManager {
   completeInstallation(): void {
     this.set('Application', 'Installed', true)
     this.set('Application', 'InstalledAt', new Date().toISOString())
-    this.set('Application', 'Version', '1.0.5')
+    this.set('Application', 'Version', '1.0.6')
     devLog('✅ 安装完成')
   }
 

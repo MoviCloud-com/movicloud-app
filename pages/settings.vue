@@ -750,8 +750,8 @@ const fetchVersionInfo = async () => {
     } else {
       // 即使 success 为 false，也更新显示（至少显示当前版本）
       versionInfo.value = {
-        currentVersion: response.currentVersion || '1.0.5',
-        latestVersion: response.latestVersion || '1.0.5',
+        currentVersion: response.currentVersion || '1.0.6',
+        latestVersion: response.latestVersion || '1.0.6',
         updateAvailable: false,
         latestRelease: null
       }
@@ -760,8 +760,8 @@ const fetchVersionInfo = async () => {
     devError('获取版本信息失败:', error)
     // 出错时至少显示当前版本
     versionInfo.value = {
-      currentVersion: '1.0.5',
-      latestVersion: '1.0.5',
+      currentVersion: '1.0.6',
+      latestVersion: '1.0.6',
       updateAvailable: false,
       latestRelease: null
     }
